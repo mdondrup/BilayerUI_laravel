@@ -90,13 +90,14 @@ Route::get('listLipidos', function (Illuminate\Http\Request  $request) {
 
 // Route::get('/peptido/{peptido_id}', 'PeptidosController@show')->name('peptidos.show');
 
-/* TODO: Implementing a route for lipids
+/* Implementing a route for lipids
 /
 */
 // Route::get('/lipid/{lipid_id}', 'LipidosController@show')->name('lipid.show');
 // Temporary route for lipid details using a closure with dummy data
 // In a real application, this should be replaced with a proper controller method
 // that fetches lipid details from the database.
+// Lipid_id can be either the numeric ID or the short_name
 // Example: Route::get('/lipid/{lipid_id}', 'LipidosController@show')->name('lipid.show');
 
 Route::get('/lipid/{lipid_id}', [LipidController::class, 'show']
