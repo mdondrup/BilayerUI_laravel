@@ -28,8 +28,8 @@
                     <h2 class="text-white text-center mt-0">NMRlipids Databank</h2>
                     <hr class="divider divider-light" />
                     <h3 class="text-white text-center mt-0">{{ $entity['name'] }}</h3>
-@include('bioschemas.molecular_entity')
                     <?php 
+                        $e2ntity = $entity ?? [];
                         $properties = $entity['properties'] ?? []; 
                         $cross_refs = $entity['cross_references'] ?? [];
                         unset($entity['properties']);  
@@ -98,10 +98,15 @@
                         @endif
 
                     </div>
+                 @include('bioschemas.molecular_entity', ['entity' => $e2ntity])
+
                 </div>
             </div>
+               
+
         </div>
     </section>
+
 
     <!-- Footer-->
     <footer class="bg-light py-5">
