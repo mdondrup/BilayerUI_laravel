@@ -16,7 +16,7 @@
 /public/build
 /public/hot
 /public/storage
-/bootstrap/cache/**
+#/bootstrap/cache/**
 /storage/*.key
 /storage/pail
 /vendor
