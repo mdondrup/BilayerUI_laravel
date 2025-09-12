@@ -1,37 +1,75 @@
-<!-- script type="application/ld+json" -->
- <pre>
-{!! json_encode([
-    '@context' => 'https://schema.org/',
-    '@type' => 'MolecularEntity',
-    '@id' => $entity->idUrl ?? url()->current(),  // or some canonical URL or IRI
-    'http://purl.org/dc/terms/conformsTo' => [
-        '@id' => 'https://bioschemas.org/profiles/MolecularEntity/0.5-RELEASE',
-        '@type' => 'CreativeWork'
-    ],
-    'identifier' => $entity->identifier, 
-    'name' => $entity->name,
-    'url' => $entity->url ?? url()->current(),
+<?php
+// Prepare data for JSON-LD
+$props = $entity['properties'] ?? [];
+// Flatten properties into a key-value array for easier access
+foreach ($props as $prop) {    
+        $entity['properties_flat'][$prop->name] = $prop->value . ($prop->unit ?? '');
+    }
+?>
 
-    // Optional / recommended
-    'inChI' => $entity->inChi ?? null,
-    'inChIKey' => $entity->inChiKey ?? null,
-    'iupacName' => $entity->iupac_name ?? null,
-    'molecularFormula' => $entity->molecular_formula ?? null,
-    'molecularWeight' => $entity->molecular_weight ?? null,
-    'smiles' => $entity->smiles ?? null,
+@php
+    $jsonLd = json_encode(array_filter([
+        '@context' => 'https://schema.org/',
+        '@type' => 'MolecularEntity',
+        '@id' => $entity['idUrl'] ?? url()->current(),
+        'http://purl.org/dc/terms/conformsTo' => [
+            '@id' => 'https://bioschemas.org/profiles/MolecularEntity/0.5-RELEASE',
+            '@type' => 'CreativeWork'
+        ],
+        'identifier' => $entity['identifier'] ?? null,
+        'name' => $entity['name'] ?? null,
+        'url' => $entity['url'] ?? url()->current(),
+        'inChI' => $entity['properties_flat']['inChI'] ?? null,
+        'inChIKey' => $entity['properties_flat']['inChIKey'] ?? null,
+        'iupacName' => $entity['properties_flat']['iupacName'] ?? null,
+        'molecularFormula' => $entity['properties_flat']['molecularFormula'] ?? null,
+        'molecularWeight' => $entity['properties_flat']['molecularWeight'] ?? null,
+        'smiles' => $entity['properties_flat']['smiles'] ?? null,
+        'alternateName' => $entity['properties_flat']['alternateName'] ?? null,
+        'description' => $entity['properties_flat']['description'] ?? null,
+        'image' => $entity['properties_flat']['image'] ?? null,
+        'sameAs' => $entity['properties_flat']['sameAs'] ?? null,
+        'biologicalRole' => $entity['properties_flat']['biologicalRole'] ?? null,
+        'chemicalRole' => $entity['properties_flat']['chemicalRole'] ?? null,
+        'bioChemInteraction' => $entity['properties_flat']['bioChemInteraction'] ?? null,
+        'bioChemSimilarity' => $entity['properties_flat']['bioChemSimilarity'] ?? null,
+    ], fn($v) => !is_null($v)), JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT);
+@endphp
 
-    'alternateName' => $entity->alternate_names ?? null,  // array
-    'description' => $entity->description ?? null,
-    'image' => $entity->image_url ?? null,
-    'sameAs' => $entity->same_as_url ?? null,
+{{-- Machine-readable JSON-LD --}}
+<script type="application/ld+json">
+{!! $jsonLd !!}
+</script>
 
-    // If you have more relationships:
-    'biologicalRole' => $entity->biological_roles ?? null,  // e.g. an array of DefinedTerm objects
-    'chemicalRole' => $entity->chemical_roles ?? null,
-    'bioChemInteraction' => $entity->interactions ?? null,
-    'bioChemSimilarity' => $entity->similar_entities ?? null,
+{{-- Toggle with a triangle --}}
+<div style="margin-top:0.5rem;margin-bottom:0.5rem;">
+    <span id="json-toggle-btn" 
+          style="cursor:pointer;user-select:none;font-size:0.8em;color:#eeeeee;">
+        ▸ View JSON
+    </span>
+</div>
 
-    // any others you have...
-], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT) !!}
+<pre id="json-preview"
+     style="display:none;margin-top:0.5rem;padding:0.5rem;background:#f3f4f6;font-size:0.8rem;border-radius:0.25rem;overflow-x:auto;">
+{!! e($jsonLd) !!}
 </pre>
-<!-- /script -->
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const btn = document.getElementById("json-toggle-btn");
+        const pre = document.getElementById("json-preview");
+
+        btn.addEventListener("click", function () {
+            if (pre.style.display === "none") {
+                pre.style.display = "block";
+                btn.textContent = "▾ Hide JSON";
+            } else {
+                pre.style.display = "none";
+                btn.textContent = "▸ View JSON";
+            }
+        });
+    });
+</script>
+
+
+
