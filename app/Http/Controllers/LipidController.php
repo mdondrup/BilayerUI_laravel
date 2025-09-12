@@ -68,7 +68,7 @@ class LipidController extends Controller
         $lipids_data['cross_references'] = $cross_refs;
 
 
-     return View::make('lipid', ['lipid' => $lipids_data]);
+     return View::make('lipid', ['entity' => $lipids_data]);
 
 
         

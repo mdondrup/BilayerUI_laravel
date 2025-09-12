@@ -27,13 +27,13 @@
                 <div class="col-lg-10">
                     <h2 class="text-white text-center mt-0">NMRlipids Databank</h2>
                     <hr class="divider divider-light" />
-                    <h3 class="text-white text-center mt-0">{{ $lipid['name'] }}</h3>
-
+                    <h3 class="text-white text-center mt-0">{{ $entity['name'] }}</h3>
+@include('bioschemas.molecular_entity')
                     <?php 
-                        $properties = $lipid['properties'] ?? []; 
-                        $cross_refs = $lipid['cross_references'] ?? [];
-                        unset($lipid['properties']);  
-                        unset($lipid['cross_references']);  
+                        $properties = $entity['properties'] ?? []; 
+                        $cross_refs = $entity['cross_references'] ?? [];
+                        unset($entity['properties']);  
+                        unset($entity['cross_references']);  
                     ?>
 
                     <!-- Bootstrap Tabs -->
@@ -57,7 +57,7 @@
                         <!-- Overview -->
                         <div class="tab-pane fade show active" id="overview" role="tabpanel">
                             <ul class="mb-0" style="font-size:1.1em;">
-                                @foreach ($lipid as $key => $value)
+                                @foreach ($entity as $key => $value)
                                     <li><strong>{{ ucfirst($key) }}:</strong> {{ $value }}</li>
                                 @endforeach
                             </ul>
