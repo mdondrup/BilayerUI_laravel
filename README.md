@@ -49,6 +49,8 @@ mysql -p laravel -u laravel < nmrlipid_trajectdb.sql
 * Create a customized ``` .env ``` file
 * start Docker
 * Follow the instructions to install and run Sail here https://laravel.com/docs/12.x/sail
+  * ``` composer require laravel/sail --dev ```
+  * ``` php artisan sail:install --devcontainer ``` 
 * ``` ./vendor/bin/sail up -d ``` to start the container in demon-mode 
 * commands to the Docker instance can be issued using sail e.g.
 ```
