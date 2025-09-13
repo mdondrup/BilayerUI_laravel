@@ -32,8 +32,7 @@
                         $e2ntity = $entity ?? [];
                         $properties = $entity['properties'] ?? []; 
                         $cross_refs = $entity['cross_references'] ?? [];
-                        unset($entity['properties']);  
-                        unset($entity['cross_references']);  
+
                     ?>
 
                     <!-- Bootstrap Tabs -->
@@ -58,6 +57,12 @@
                         <div class="tab-pane fade show active" id="overview" role="tabpanel">
                             <ul class="mb-0" style="font-size:1.1em;">
                                 @foreach ($entity as $key => $value)
+                                    @if($key === 'jsonLd' || 
+                                    $key === 'id' || 
+                                    $key === 'properties' || 
+                                    $key === 'cross_references' ||
+                                    $key === 'properties_flat')
+                                     <!-- Skip certain keys --> @continue @endif
                                     <li><strong>{{ ucfirst($key) }}:</strong> {{ $value }}</li>
                                 @endforeach
                             </ul>
@@ -98,8 +103,9 @@
                         @endif
 
                     </div>
-                 @include('bioschemas.molecular_entity', ['entity' => $e2ntity])
-
+                    <div style="margin-top:1rem;">
+                        @include('bioschemas.json_pre', ['entity' => $entity]) 
+                        
                 </div>
             </div>
                
