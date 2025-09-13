@@ -4,6 +4,7 @@
 
 <body id="page-top">
     <!-- Navigation-->
+     <main>
      <header class="masthead">
         <div class="container px-4 px-lg-5 h-100">
             <div class="row gx-4 gx-lg-5 h-100 align-items-center justify-content-center text-center">
@@ -109,16 +110,21 @@
                         @endif
 
                     </div>
-                    <div style="margin-top:1rem;">
+                    <div style="margin-top:1rem; flex:1 0 auto;">
                         @include('bioschemas.json_pre', ['entity' => $entity]) 
-                        
+                    </div>    
                 </div>
             </div>
                
 
         </div>
     </div>
+    <div style="display: block; height: 200%;">
+        &nbsp;
+    &nbsp;
+    </div>
 </header>
+</main>
 
     @include('layouts.foot')
 
