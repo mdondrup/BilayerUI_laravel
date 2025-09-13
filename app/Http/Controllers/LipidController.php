@@ -11,14 +11,12 @@ class LipidController extends Controller
 
     private function formatJsonLd(array $entity): string {
 
-        // Prepare data for JSON-LD
-$props = $entity['properties'] ?? [];
-// Flatten properties into a key-value array for easier access
+    // Prepare data for JSON-LD
+    $props = $entity['properties'] ?? [];
+    // Flatten properties into a key-value array for easier access
     foreach ($props as $prop) {    
         $entity['properties_flat'][$prop->name] = $prop->value . ($prop->unit ?? '');
     }
-
-
 
     $jsonAr = array_filter([
         '@context' => 'https://schema.org/',
@@ -56,7 +54,6 @@ $props = $entity['properties'] ?? [];
                 }
             }
         }
-
         return json_encode($jsonAr, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
     }
 
