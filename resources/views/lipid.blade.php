@@ -4,28 +4,34 @@
 
 <body id="page-top">
     <!-- Navigation-->
-    <nav class="navbar navbar-expand-lg navbar-light fixed-top py-3" id="mainNav">
-        <div class="container px-4 px-lg-5">
-            <a class="navbar-brand" href="/#page-top">NMRlipids Databank</a>
-            <button class="navbar-toggler navbar-toggler-right" type="button" data-bs-toggle="collapse"
-                data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
-                aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarResponsive">
-                <ul class="navbar-nav ms-auto my-2 my-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="/#about">About</a></li>
-                </ul>
+     <header class="masthead">
+        <div class="container px-4 px-lg-5 h-100">
+            <div class="row gx-4 gx-lg-5 h-100 align-items-center justify-content-center text-center">
+                <div class="col-lg-10 align-self-end">
+                    <h1 class="text-white font-weight-bold">NMRlipids Databank</h1>
+                     <nav class="navbar navbar-expand-lg navbar-light fixed-top py-3" id="mainNav">
+                         <div class="container px-4 px-lg-5">
+                            <a class="navbar-brand" href="/#page-top">NMRlipids Databank</a>
+                            <button class="navbar-toggler navbar-toggler-right" type="button" data-bs-toggle="collapse"
+                               data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false"
+                                  aria-label="Toggle navigation">
+                                <span class="navbar-toggler-icon"></span>
+                             </button>
+                                <div class="collapse navbar-collapse" id="navbarResponsive">
+                                    <ul class="navbar-nav ms-auto my-2 my-lg-0">
+                                        <li class="nav-item"><a class="nav-link" href="/#about">About</a></li>
+                                    </ul>
+                                </div>
+                        </div>
+                    </nav>
+                </div>
             </div>
         </div>
-    </nav>
-
-    <!-- About-->
-    <section class="page-section bg-primary" id="about">
+    
+    <!-- Main page -->
         <div class="container px-4 px-lg-5">
             <div class="row gx-4 gx-lg-5 justify-content-center">
                 <div class="col-lg-10">
-                    <h2 class="text-white text-center mt-0">NMRlipids Databank</h2>
                     <hr class="divider divider-light" />
                     <h3 class="text-white text-center mt-0">{{ $entity['name'] }}</h3>
                     <?php 
@@ -111,17 +117,11 @@
                
 
         </div>
-    </section>
+    </div>
+</header>
 
+    @include('layouts.foot')
 
-    <!-- Footer-->
-    <footer class="bg-light py-5">
-        <div class="container px-4 px-lg-5">
-            <div class="small text-center text-muted">
-                Copyright &copy;{{ date('Y') }} - NMRlipids
-            </div>
-        </div>
-    </footer>
     <!-- Bootstrap core JS--><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <!-- Core theme JS-->
     <script src="{{ asset('js/scripts.js') }}"></script>
