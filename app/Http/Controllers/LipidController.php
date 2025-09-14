@@ -7,50 +7,51 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\DB;
 
 class LipidController extends Controller
-{   
+{
 
-    private function formatJsonLd(array $entity): string {
+    private function formatJsonLd(array $entity): string
+    {
 
-    // Prepare data for JSON-LD
-    $props = $entity['properties'] ?? [];
-    // Flatten properties into a key-value array for easier access
-    foreach ($props as $prop) {    
-        $entity['properties_flat'][$prop->name] = $prop->value . ($prop->unit ?? '');
-    }
+        // Prepare data for JSON-LD
+        $props = $entity['properties'] ?? [];
+        // Flatten properties into a key-value array for easier access
+        foreach ($props as $prop) {
+            $entity['properties_flat'][$prop->name] = $prop->value . ($prop->unit ?? '');
+        }
 
-    $jsonAr = array_filter([
-        '@context' => 'https://schema.org/',
-        '@type' => 'MolecularEntity',
-        '@id' => $entity['idUrl'] ?? url()->current(),
-        'http://purl.org/dc/terms/conformsTo' => [
-            '@id' => 'https://bioschemas.org/profiles/MolecularEntity/0.5-RELEASE',
-            '@type' => 'CreativeWork'
-        ],
-        'identifier' => $entity['identifier'] ?? null,
-        'name' => $entity['name'] ?? null,
-        'url' => $entity['url'] ?? url()->current(),
-        'inChI' => $entity['properties_flat']['inChI'] ?? null,
-        'inChIKey' => $entity['properties_flat']['inChIKey'] ?? null,
-        'iupacName' => $entity['properties_flat']['iupacName'] ?? null,
-        'molecularFormula' => $entity['properties_flat']['molecularFormula'] ?? null,
-        'molecularWeight' => $entity['properties_flat']['MolecularWeight'] ?? null,
-        'smiles' => $entity['properties_flat']['smiles'] ?? null,
-        'alternateName' => $entity['properties_flat']['alternateName'] ?? null,
-        'description' => $entity['properties_flat']['description'] ?? null,
-        'image' => $entity['properties_flat']['image'] ?? null,
-        'sameAs' => $entity['properties_flat']['sameAs'] ?? null,
-        'biologicalRole' => $entity['properties_flat']['biologicalRole'] ?? null,
-        'chemicalRole' => $entity['properties_flat']['chemicalRole'] ?? null,
-        'bioChemInteraction' => $entity['properties_flat']['bioChemInteraction'] ?? null,
-        'bioChemSimilarity' => $entity['properties_flat']['bioChemSimilarity'] ?? null,
-    ], fn($v) => !is_null($v));
+        $jsonAr = array_filter([
+            '@context' => 'https://schema.org/',
+            '@type' => 'MolecularEntity',
+            '@id' => $entity['idUrl'] ?? url()->current(),
+            'http://purl.org/dc/terms/conformsTo' => [
+                '@id' => 'https://bioschemas.org/profiles/MolecularEntity/0.5-RELEASE',
+                '@type' => 'CreativeWork'
+            ],
+            'identifier' => $entity['identifier'] ?? null,
+            'name' => $entity['name'] ?? null,
+            'url' => $entity['url'] ?? url()->current(),
+            'inChI' => $entity['properties_flat']['inChI'] ?? null,
+            'inChIKey' => $entity['properties_flat']['inChIKey'] ?? null,
+            'iupacName' => $entity['properties_flat']['iupacName'] ?? null,
+            'molecularFormula' => $entity['properties_flat']['molecularFormula'] ?? null,
+            'molecularWeight' => $entity['properties_flat']['MolecularWeight'] ?? null,
+            'smiles' => $entity['properties_flat']['smiles'] ?? null,
+            'alternateName' => $entity['properties_flat']['alternateName'] ?? null,
+            'description' => $entity['properties_flat']['description'] ?? null,
+            'image' => $entity['properties_flat']['image'] ?? null,
+            'sameAs' => $entity['properties_flat']['sameAs'] ?? null,
+            'biologicalRole' => $entity['properties_flat']['biologicalRole'] ?? null,
+            'chemicalRole' => $entity['properties_flat']['chemicalRole'] ?? null,
+            'bioChemInteraction' => $entity['properties_flat']['bioChemInteraction'] ?? null,
+            'bioChemSimilarity' => $entity['properties_flat']['bioChemSimilarity'] ?? null,
+        ], fn($v) => !is_null($v));
 
         // Add cross-references
         if (isset($entity['cross_references']) && is_iterable($entity['cross_references'])) {
             foreach ($entity['cross_references'] as $xref) {
                 if (isset($xref)) {
                     $jsonAr['sameAs'][] = $xref->url ?:
-                    "https://identifiers.org/{$xref->database}/{$xref->external_id}";
+                        "https://identifiers.org/{$xref->database}/{$xref->external_id}";
                 }
             }
         }

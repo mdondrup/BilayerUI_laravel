@@ -10957,9 +10957,9 @@ header.masthead h1, header.masthead .h1 {
 @media (min-width: 992px) {
   header.masthead {
     height: 100%;
-    min-height: 40rem;
+    min-height: 50rem;
     padding-top: 4.5rem;
-    /*padding-bottom: 0;*/
+    padding-bottom: 4.5rem;
   }
   header.masthead p {
     font-size: 1.15rem;
