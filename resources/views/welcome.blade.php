@@ -74,13 +74,13 @@ use App\Http\Controllers\StatisticsController;
 
     <!-- Masthead-->
     <header class="masthead">
-        <div class="container px-4 px-lg-5  ">
+        <div class="container px-4 px-lg-5 ">
             <div class="row gx-4 gx-lg-5   align-items-center justify-content-center text-center">
                 <div class="col-lg-8 align-self-end">
                     <h2 class="text-white font-weight-bold">
-                        <img class="img-fluid" alt="Responsive image"
+                        <img class="img-fluid" alt="NMRLipids Databank Logo"
                             src="{{ asset('storage/images/nmr_w_letras.png') }}" alt="">
-                         Welcome to NMRlipids Databank-GUI (v<?php echo config('app.version'); ?>)
+                          (version <?php echo config('app.version'); ?>)
                     </h2>
                     <hr class="divider" />
                 </div>
@@ -125,24 +125,19 @@ use App\Http\Controllers\StatisticsController;
                     </div>
 
                     <div class="col-12 m-4">
-                        <div style="color:#fff;">
+                        <div style="text-align: center; font-size: 0.9em; color: #ffffff; padding: 1em;">
                             {{ StatisticsController::totals() }}
-                        </div>
-                        <div class="m-4">
-                            <!--<p class="text-white-75 mb-5"><a href="/statistics">See more Statistics</a></p>-->
-                        </div>
-
+                        </div>                        
                     </div>
-
                     <!--<img class="img-fluid" alt="Responsive image" src="{{ asset('storage/images/supepmem1_100.jpg') }}" alt="">-->
-
                 </div>
             </div>
         </div>
     </header>
+   
 
     <!-- About-->
-    <section class="page-section bg-primary" id="about">
+    <section class="page-section bg-primary" style="padding: 5em" id="about">
         <div class="container px-4 px-lg-5">
             <div class="row gx-4 gx-lg-5 justify-content-center">
                 <div class="col-lg-8 text-center">
