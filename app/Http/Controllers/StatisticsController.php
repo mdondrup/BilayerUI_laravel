@@ -24,7 +24,7 @@ class StatisticsController extends Controller
         DB::enableQueryLog();
 
         $TotalTrayectorias = TrayectoriaAnalisis::select('id')->count();
-        $TotalMembranas = Membrana::select('id')->count()-1;
+        $TotalMembranas = Membrana::select('id')->count();
         $CountMembranas = Membrana::groupBy('name')->select('name', DB::raw('count(*) as total'))->get();
         $CountPeptideActivity = Peptido::groupBy('activity')->select('activity', DB::raw('count(*) as total'))->get();
         $CountPeptideLength = Peptido::groupBy('length')->select('length', DB::raw('count(*) as total'))->get();
@@ -69,7 +69,7 @@ $CountPeptideHydrophobic_dipolar_moment = Peptido::groupBy('hydrophobic_dipolar_
     static function totals()
     {
       $TotalTrayectorias = TrayectoriaAnalisis::select('id')->count();
-      $TotalMembranas = Membrana::select('id')->count()-1;
+      $TotalMembranas = Membrana::select('id')->count();
 
       return view('statistics.totals', [
           'totalTrayectorias' => $TotalTrayectorias,

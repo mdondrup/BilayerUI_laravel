@@ -9,9 +9,17 @@
     <meta property="og:site_name" content="NMRlipids Databank">
     <meta property="og:title" content="NMRlipids Databank">
     <meta property="og:description" content="NMRlipids Databank">
-    <meta property="og:url" content="https://databank.nmrlipids.fi/">
+    <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:locale" content="en_US">
-    <meta property="og:image" content="https://databank.nmrlipids.fi/storage/images/nmr_w_letras.png">
+    <meta property="og:image" content="{{ url('storage/images/nmr_w_letras.png') }}">
+    <!-- Include bioschemas only if entity is provided -->
+    @if(isset($entity) && !empty($entity))
+     @include('bioschemas.molecular_entity', ['entity' => $entity])
+     <meta property="og:title" content="{{ $entity['name'] ?? 'Molecular Entity' }}">
+     <meta property="og:description" content="{{ $entity['properties_flat']['description'] ?? 'Details about the molecular entity.' }}">
+    
+    @endif
+
     <!-- Favicon-->
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" />
     <!-- Bootstrap Icons-->
