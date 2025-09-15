@@ -770,8 +770,8 @@ die();
                                 <div class="card-body" style="height: 100%;">
                                     <span class="d-flex justify-content-center jmol_zorder  bg-jmolAnalysis"
                                         id=jmolViewLast_traj></span>
-                                    <button id="btnWater" type="button" class="mt-2 btn btn-primary btn-sm "
-                                        onclick="scrWater()">Hide Water</button>
+                                    <!-- button id="btnWater" type="button" class="mt-2 btn btn-primary btn-sm "
+                                        onclick="scrWater()">Hide Water</button -->
 
                                     <div class="row p-4">
 
@@ -1233,7 +1233,7 @@ die();
 
     ?>
 
-    <script type="text/javascript">
+    <!-- script type="text/javascript">
         $(document).ready(function() {
             var InfoBase = {
                 width: 300,
@@ -1274,7 +1274,7 @@ die();
             Jmol.script(jmolApplet1, "spin off; wireframe 15%;spacefill 100%;set zoomLarge off;" + Cadena)
             //Jmol.script(jmolApplet2, "spin off; wireframe 15%;spacefill 100%;set zoomLarge off;select hydrophobic;color green; select polar;color yellow;select acidic;color red;select basic;color blue;"+Cadena)
 
-            // Select CHOL---> CHO ::: DOPC --> DOP En mayusculas
+            // Select CHOL -- CHO ::: DOPC -- DOP En mayusculas
             //select [CHO]; hide !selected;
 
             //select WITHIN(ATOMNAME,"NH3,PO4,GL1,GL2,C1A,D2A,C3A,C4A,C1B,D2B,C3B,C4B"); color green
@@ -1293,7 +1293,7 @@ die();
                 cssTx += '</style>';
                 document.writeln(cssTx);
             */
-            <?php
+            <!- ?php
 
             // LOOP PARA LOS LIPIDOS
 
@@ -1311,7 +1311,7 @@ die();
                 echo 'Jmol.script(jmolApplet' . $lipido->short_name . ", \"spin off; wireframe 15%;spacefill 200%;select C\");\n";
             }
 
-            ?>
+            ? ->
 
         });
 
@@ -1347,7 +1347,7 @@ die();
                 //Jmol.script(jmolApplet1, 'select water; hide selected;');
             }
         };
-    </script>
+    </script -->
 
     <script>
 

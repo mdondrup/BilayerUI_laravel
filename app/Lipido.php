@@ -18,10 +18,6 @@ class Lipido extends AppModel
         return 'lipid_id';
     }
 
-    public function heteromol()
-    {
-        return $this->belongsTo(Heteromol::class, 'heteromol_id');
-    }
 
     public function forcefields()
     {
