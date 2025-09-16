@@ -167,7 +167,7 @@ use App\Http\Controllers\StatisticsController;
                             collaboration</a>.
                         It has been designed to improve the <a href="https://www.go-fair.org/fair-principles/">Findability, Accessibility, Interoperability, and Reuse
                         (FAIR)</a> of MD simulation data.
-                        NMRlipids databank is implemented using overlay databank structure described more detailed in
+                        NMRlipids databank is implemented using an overlay databank structure and is described in detail in
                         the <a href="https://www.nature.com/articles/s41467-024-45189-z"> databank publication</a>. </p>
                     <p class="text-white-75 mb-4 txt_desc text-left">
                         NMRlipids Databank-GUI (this website) can be used to browse and search the content of the
@@ -177,11 +177,13 @@ use App\Http\Controllers\StatisticsController;
 
                     <p class="text-white-75 mb-4 txt_desc text-left">
                         The <a href="http://github.com/NMRlipids/Databank/"> NMRlipids Databank-API</a> provides
-                        programmatic access to all simulation data in the NMRlipids Databank. This enables wide range of
+                        programmatic access to all simulation data in the NMRlipids Databank. This enables a wide range of
                         novel data-driven applications —
                         from construction of machine learning models that predict membrane properties to automatic
                         analysis of virtually any property across all simulations in the Databank.
-                        Example  <a
+                         </p>
+                    <p class="text-white-75 mb-4 txt_desc text-left">
+                        <a
                             href="https://github.com/NMRLipids/databank-template/blob/main/scripts/"> Jupyter Notebooks</a>
                         and other examples for applications of NMRlipids Databank-API are available on <a
                             href="https://github.com/NMRlipids/Databank">GitHub</a> and in the <a
