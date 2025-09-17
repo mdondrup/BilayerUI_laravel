@@ -159,8 +159,9 @@ use App\Http\Controllers\StatisticsController;
         <div class="container px-4 px-lg-5">
             <div class="row gx-4 gx-lg-5 justify-content-center">
                 <div class="col-lg-8 text-center">
-                    <h2 class="text-white mt-0">NMRlipids Databank</h2>
+                    <h2 class="text-white mt-0">About</h2>
                     <hr class="divider divider-light" />
+                    <h3 class="text-white mt-0">What is NMRlipids Databank?</h2>
                     <p class="text-white-75 mb-4 txt_desc text-left">NMRlipids Databank is a community-driven catalogue containing
                         atomistic molecular dynamics (MD) simulations of biologically relevant
                         lipid membranes emerging from the <a href="http://nmrlipids.blogspot.com/"> NMRlipids open
@@ -168,11 +169,25 @@ use App\Http\Controllers\StatisticsController;
                         It has been designed to improve the <a href="https://www.go-fair.org/fair-principles/">Findability, Accessibility, Interoperability, and Reuse
                         (FAIR)</a> of MD simulation data.
                         NMRlipids databank is implemented using an overlay databank structure and is described in detail in
-                        the <a href="https://www.nature.com/articles/s41467-024-45189-z"> databank publication</a>. </p>
+                        the <a href="https://www.nature.com/articles/s41467-024-45189-z"> databank publication</a>. 
+                        Please refer to the <a href="https://nmrlipids.github.io/">online documentation</a> of the system and its components</p>
+                    <h3 class="text-white mt-0">Using NMRlipids </h2>
+                        <p class="text-white-75 mb-4 txt_desc text-left">
+                            NMRlipids consists of three main components:
+
+                            <ul     class="text-white-75 mb-4 txt_desc text-left">
+                                <li>NMRlipids Databank-GUI (this website)</li>
+                                <li>NMRlipids Databank-API</li>
+                                <li>The BilayerData repository</li>
+                            </ul>
+                        </p>
+
                     <p class="text-white-75 mb-4 txt_desc text-left">
-                        NMRlipids Databank-GUI (this website) can be used to browse and search the content of the
+                        The NMRlipids Databank-GUI </a> can be used to browse and search the content of the
                         Databank, to select the best available simulations for specific systems based on ranking lists,
-                        and to perform comparisons between basic properties of membranes.
+                        and to perform comparisons between basic properties of membranes. It is implemented as a web
+                        application using the Laravel framework. The source code is available on <a href="https://github.com/NMRLipids/BilayerGUI_laravel">GitHub</a>.
+                        We have made efforts towards easy local deployment of the application to use, e.g., with private data.
                     </p>
 
                     <p class="text-white-75 mb-4 txt_desc text-left">
@@ -185,23 +200,40 @@ use App\Http\Controllers\StatisticsController;
                     <p class="text-white-75 mb-4 txt_desc text-left">
                         <a
                             href="https://github.com/NMRLipids/databank-template/blob/main/scripts/"> Jupyter Notebooks</a>
-                        and other examples for applications of NMRlipids Databank-API are available on <a
+                        and other examples for applications of NMRlipids Databank-API are included on <a
                             href="https://github.com/NMRlipids/Databank">GitHub</a> and in the <a
                             href="https://www.nature.com/articles/s41467-024-45189-z"> NMRlipids databank publication</a>.
                     </p>
+
+                    <p class="text-white-75 mb-4 txt_desc text-left">
+                        The <a href="https://github.com/NMRLipids/BilayerData">BilayerData repository</a> is the main data storage of the NMRlipids
+                        Databank. It contains the actual meta-data on MD simulation data and metadata describing simulations and molecules. The actual
+                        trajectory files are stored in <a href="https://zenodo.org/">Zenodo</a> and linked to the BilayerData repository.
+                        The repository is open for contributions from the community. Instructions for contributing data
+                        are available in the <a href="https://nmrlipids.github.io/dbcontribute.html">online
+                        documentation</a>.
+                    </p>
+                    <h3 class="text-white mt-0">Citing and licensing</h2>
                     <p class="text-white-75 mb-4 txt_desc text-left">
                         If you use the NMRlipids databank in your publications, please cite the NMRlipids <a
                             href="https://www.nature.com/articles/s41467-024-45189-z">Databank
                             publication</a>,
-                        as well as the trajectory entries and related publications whenever appropriate.
-                        All data is provided under a CC-BY-4.0 license AS-IS 
-                        (see <a href="https://raw.githubusercontent.com/NMRLipids/BilayerData/refs/heads/main/LICENSE">LICENSE</a>). 
-                        The interface code is provided under an MIT license (see <a href="https://raw.githubusercontent.com/NMRLipids/bilayerGUI_laravel/main/LICENSE">LICENSE</a>).  
-                        There are no warranties of any kind that the data or code are correct
+                        as well as the trajectory entries and related publications whereever appropriate.
+                        The data in the BilayerData repository are provided under a Creative Commons Attribution 4.0
+                        International (CC BY 4.0) license
+                        (see <a href="https://github.com/NMRLipids/BilayerData/blob/main/LICENSE">LICENSE</a>).
+                        The code for the NMRlipids Databank-API is provided under the GNU General Public   
+                         license version 3 (see <a
+                            href="https://github.com/NMRLipids/Databank/blob/main/LICENSE.txt">LICENSE</a>). 
+                        The user interface code is provided under an MIT license (see <a href="https://github.com/NMRLipids/BilayerGUI_laravel/blob/main/LICENSE">LICENSE</a>).  
+                        
+                        All data and code is provided AS-IS. 
+                        There are no warranties of any kind that the data or software are correct
                         or suitable for any purpose.
                     </p>
+                    <h3 class="text-white mt-0">Feedback and bug reports</h2>
                     <p class="text-white-75 mb-4 txt_desc text-left">
-                        Please inform us via the GitHub issue tracker, if you find
+                        Please inform us via the GitHub issue tracker of each component for feedback or if you find
                         any errors or bugs.
                     </p>
                 </div>
