@@ -186,7 +186,7 @@ use App\Http\Controllers\StatisticsController;
                         The NMRlipids Databank-GUI </a> can be used to browse and search the content of the
                         Databank, to select the best available simulations for specific systems based on ranking lists,
                         and to perform comparisons between basic properties of membranes. It is implemented as a web
-                        application using the Laravel framework. The source code is available on <a href="https://github.com/NMRLipids/BilayerGUI_laravel">GitHub</a>.
+                        application using the <a href="https://laravel.com/">Laravel framework</a>. The source code is available on <a href="https://github.com/NMRLipids/BilayerGUI_laravel">GitHub</a>.
                         We have made efforts towards easy local deployment of the application to use, e.g., with private data.
                     </p>
 
@@ -220,20 +220,20 @@ use App\Http\Controllers\StatisticsController;
                             publication</a>,
                         as well as the trajectory entries and related publications whereever appropriate.
                         The data in the BilayerData repository are provided under a Creative Commons Attribution 4.0
-                        International (CC BY 4.0) license
+                        International (CC-BY-4.0) license
                         (see <a href="https://github.com/NMRLipids/BilayerData/blob/main/LICENSE">LICENSE</a>).
                         The code for the NMRlipids Databank-API is provided under the GNU General Public   
-                         license version 3 (see <a
+                         license version 3 (GPLv3) (see <a
                             href="https://github.com/NMRLipids/Databank/blob/main/LICENSE.txt">LICENSE</a>). 
                         The user interface code is provided under an MIT license (see <a href="https://github.com/NMRLipids/BilayerGUI_laravel/blob/main/LICENSE">LICENSE</a>).  
                         
-                        All data and code is provided AS-IS. 
-                        There are no warranties of any kind that the data or software are correct
-                        or suitable for any purpose.
+                        All data and code are provided AS-IS. 
+                        There is no warranty of any kind that the data or software are correct
+                        or suitable for any specific purpose.
                     </p>
                     <h3 class="text-white mt-0">Feedback and bug reports</h2>
                     <p class="text-white-75 mb-4 txt_desc text-left">
-                        Please inform us via the GitHub issue tracker of each component for feedback or if you find
+                        Please contact us via the GitHub issue tracker of each component for feedback or if you find
                         any errors or bugs.
                     </p>
                 </div>
