@@ -38,35 +38,83 @@ CREATE TABLE `sessions` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 
+-- 
+-- Table structure for table `experiments`
 --
--- Table structure for table `experiments_FF`
---
-
-DROP TABLE IF EXISTS `experiments_FF`;
+DROP TABLE IF EXISTS `experiments`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `experiments_FF` (
+CREATE TABLE `experiments` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `doi` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
   `path` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  `type` enum('FF','OP') CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT 'FF',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+
 --
--- Table structure for table `experiments_OP`
+-- View structure for table `experiments_FF`
 --
 
-DROP TABLE IF EXISTS `experiments_OP`;
+DROP VIEW IF EXISTS `experiments_FF`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;  
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE VIEW `experiments_FF` AS
+ SELECT `experiments`.`id` AS `id`,
+    `experiments`.`doi` AS `doi`,
+    `experiments`.`path` AS `path`
+   FROM `experiments`
+  WHERE (`experiments`.`type` = 'FF');
+
+--
+-- View structure for table `experiments_OP`
+--
+
+DROP VIEW IF EXISTS `experiments_OP`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;  
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE VIEW `experiments_OP` AS
+ SELECT `experiments`.`id` AS `id`,
+    `experiments`.`doi` AS `doi`,
+    `experiments`.`path` AS `path`
+   FROM `experiments`
+  WHERE (`experiments`.`type` = 'OP');
+
+
+--
+-- Table structure for table `experiments_properties`
+-- 
+DROP TABLE IF EXISTS `experiments_properties`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `experiments_OP` (
-  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `doi` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  `path` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+CREATE TABLE `experiments_properties` (
+  `experiment_id` bigint unsigned NOT NULL,
+  `property_id` bigint unsigned NOT NULL,
+  PRIMARY KEY (`experiment_id`,`property_id`),
+  CONSTRAINT `experiments_FF_properties_ibfk_1` FOREIGN KEY (`experiment_id`) REFERENCES `experiments` (`id`),
+  CONSTRAINT `experiments_FF_properties_ibfk_2` FOREIGN KEY (`property_id`) REFERENCES `experiment_properties` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `experiment_properties`
+--
+DROP TABLE IF EXISTS `experiment_properties`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `experiment_properties` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `unit` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `type` ENUM('string', 'integer', 'numeric', 'float') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 
 --
 -- Table structure for table `forcefields`
