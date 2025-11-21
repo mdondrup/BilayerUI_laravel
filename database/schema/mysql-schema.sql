@@ -47,13 +47,17 @@ DROP TABLE IF EXISTS `experiments`;
 CREATE TABLE `experiments` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `doi` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
+  `section` bigint  NOT NULL,
   `path` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
   `type` enum('FF','OP') CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT 'FF',
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `experiments_doi_section_type_unique` (`doi`,`section`,`type`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
-
+insert into experiments values (1,"10.1039/C4SM00066H", "100","my/path","FF");
+INSERT INTO experiments VALUES (2, "10.1021/acs.jpcb.5b09591", "200", "another/path", "OP");  
+INSERT INTO experiments VALUES (3, "10.1039/C4SM00066H", "101", "my/secondpath", "FF");
 --
 -- View structure for table `experiments_FF`
 --
@@ -86,25 +90,33 @@ CREATE VIEW `experiments_OP` AS
 --
 -- Table structure for table `experiments_properties`
 -- 
-DROP TABLE IF EXISTS `experiments_properties`;
+DROP TABLE IF EXISTS `experiments_properties_linker`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `experiments_properties` (
+CREATE TABLE `experiments_properties_linker` (
   `experiment_id` bigint unsigned NOT NULL,
   `property_id` bigint unsigned NOT NULL,
   PRIMARY KEY (`experiment_id`,`property_id`),
   CONSTRAINT `experiments_FF_properties_ibfk_1` FOREIGN KEY (`experiment_id`) REFERENCES `experiments` (`id`),
-  CONSTRAINT `experiments_FF_properties_ibfk_2` FOREIGN KEY (`property_id`) REFERENCES `experiment_properties` (`id`)
+  CONSTRAINT `experiments_FF_properties_ibfk_2` FOREIGN KEY (`property_id`) REFERENCES `experiment_property` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+INSERT INTO `experiments_properties_linker` (`experiment_id`, `property_id`) VALUES
+(1, 1),
+(1, 2),
+(1, 3),
+(2, 1),
+(2, 3),
+(3, 4); 
 
 --
 -- Table structure for table `experiment_properties`
 --
-DROP TABLE IF EXISTS `experiment_properties`;
+DROP TABLE IF EXISTS `experiment_property`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `experiment_properties` (
+CREATE TABLE `experiment_property` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -115,6 +127,12 @@ CREATE TABLE `experiment_properties` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+INSERT INTO `experiment_property` (`id`, `name`, `description`, `value`, `unit`, `type`) VALUES
+(1, 'Temperature', 'Temperature at which the experiment was conducted', '310', 'K', 'float'),
+(2, 'Pressure', 'Pressure during the experiment', '1', 'atm', 'float'),
+(3, 'Salt Concentration', 'Concentration of salt in the solution', '150', 'mM', 'float'),
+(4, 'pH Level', 'pH level of the solution during the experiment', '7.4', '', 'float');
+; 
 
 --
 -- Table structure for table `forcefields`

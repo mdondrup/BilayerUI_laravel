@@ -5,6 +5,7 @@ use App\Http\Controllers\ImageController;
 use App\Http\Controllers\SitemapXmlController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\LipidController;
+use App\Http\Controllers\ExperimentController;
 use Illuminate\Support\Facades\View;
 
 
@@ -102,6 +103,10 @@ Route::get('listLipidos', function (Illuminate\Http\Request  $request) {
 
 Route::get('/lipid/{lipid_id}', [LipidController::class, 'show']
 )->name('lipid.show');
+
+Route::get('/experiment/{type}/{doi}/{section}', [ExperimentController::class, 'show'])
+    ->where(['doi' => '.+', 'section' => '[0-9]+', 'type' => 'FF|OP'])
+    ->name('experiments.show');
 
 // ion
 // agua
