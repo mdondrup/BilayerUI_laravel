@@ -60,6 +60,10 @@
                                             <td>{{ $entity['doi'] }}</td>
                                         </tr>
                                         <tr>
+                                            <th scope="row">Data DOI</th>
+                                            <td>{{ $entity['data_doi'] }}</td>
+                                        </tr>
+                                        <tr>
                                             <th scope="row">Type</th>
                                             <td>{{ $entity['type'] }}</td>
                                         </tr>
@@ -67,6 +71,53 @@
                                             <th scope="row">Path</th>
                                             <td>{{ $entity['path'] }}</td>
                                         </tr>
+                                        <tr>
+                                            <th scope="row">Section</th>
+                                            <td>{{ $entity['section'] }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">Membrane composition</th>
+
+                                            <td>
+                                            <table class="table table-striped table-sm ">
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col">Lipid</th>
+                                                        <th scope="col">Molar Fraction</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                @foreach ( $entity['membrane_composition'] as $component )
+                                                    <tr>
+                                                        <td><a href="/lipid/{{ $component->id }}"> {{ $component->name }}</a></td>
+                                                        <td>{{ $component->mol_fraction }}</td>
+                                                    </tr>
+                                                @endforeach
+                                                </tbody>
+                                            </table>  
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">Solution composition</th>
+                                            <td>
+                                            <table class="table table-striped table-sm ">
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col">Heteromolecule</th>
+                                                        <th scope="col">Mass %</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                @foreach ( $entity['solution_composition'] as $component )
+                                                    <tr>
+                                                        <td> {{ $component->name }}</td>
+                                                        <td>{{ $component->concentration }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                            </table>  
+                                            </td>
+                                        </tr>    
                                     </tbody>
                                 </table>
                         </div>
