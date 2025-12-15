@@ -20,7 +20,7 @@ class Moleculas extends Filtro
         $this->modelo = new Molecula();
         $this->valor = '';
         $this->visible = true;
-        $this->join_count = "COUNT( CASE WHEN trajectories_heteromolecules.molecule_name = '%s' THEN 1 ELSE NULL END) AS %s";
+        $this->join_count = "COUNT( CASE WHEN trajectories_heteromolecules.molecule_name = '%s' THEN 1 ELSE NULL END) AS `%s`";
         $this->where = "  heteromolecule.%s = 1 ";
         $this->join = "INNER JOIN(
                        SELECT heteromolecule.id

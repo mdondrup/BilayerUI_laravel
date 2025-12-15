@@ -101,11 +101,11 @@ def SQL_Select(Table: str, Values: list, Condition: dict = {}) -> str:
         comps = []
         for k, v in Condition.items():
             if isinstance(v, numbers.Number) and v != np.ceil(v):
-                comp = f'ABS( `{k}` - {v}) < 1E-5'
+                comp = f'ABS( `{k}` - %f) < 1E-5'
             else:
-                comp = f'`{k}` = "{v}"'
+                comp = f'`{k}` = %s'
             comps.append(comp)
-        Query += 'WHERE ' + " AND ".join(comps)
+        Query += 'WHERE ' + (" AND ".join(comps))
     return Query
 
 
@@ -134,9 +134,9 @@ def SQL_Create(Table: str, Values: dict, Condition: dict = {}) -> str:
     Query = (
         f' INSERT INTO `{Table}` (' +
         ", ".join(map(lambda x: f'`{x}`', Values.keys())) +
-        ") VALUES (" + ", ".join(map(lambda x: f'"{x}"', Values.values())) + ') '
+        ") VALUES (" + (','.join(["%s"]*len(Values)))  + ')'
     )
-
+    # print(Query)
     # Add a condition to the search
     if Condition:
         Query += (
@@ -204,23 +204,41 @@ def CheckEntry(Table: str, LipidInformation: dict = {}) -> int:
     int or None
         ID of the entry in the table. If it does not exists, the value is None
     '''
-
+    ID = None
     # Create a cursor
     with database.cursor() as cursor:
         # Find the ID(s) of the entry matching the condition
-        cursor.execute(SQL_Select(Table, ["id"], LipidInformation))
-        # The list of IDs
-        ID = cursor.fetchone()
+        values = tuple(LipidInformation.values())
+        #print(f"Executing query to check entry in {Table} with conditions {values}")
+        # Use mogrify to get the composed query string as bytes
+        query = SQL_Select(Table, ["id"], LipidInformation)
+        composed_query_str = cursor.mogrify(query, values)
+        #print("Composed Query String (Before Execution):")
+        #print(composed_query_str)
+        try:           
+            cursor.execute(query, values)
+            ID = cursor.fetchall() # Values should be unique
+            if ID:
+                assert len(ID) <= 1, \
+                "Only one ID should be returned for unique entries " + str(LipidInformation) \
+                + " in table " + Table + "\n" \
+                + composed_query_str
+                return ID[0][0]
+                 # extract values from dict
+            else:
+                return None   
+        except pymysql.Error as err:
+            print(f"Error: {err}")
+            # You can also use it here to log the failed query:
+            print("Failed Query String:")
+            print(composed_query_str)
+            raise err
 
-    # return None imidiately if the record is not found
-    if ID is None:
-        return ID
-
-    # More than ID will raise an error
-    assert len(ID) == 1
-
-    # extract ID-s value
-    return ID[0]
+        finally:
+            if cursor:
+                cursor.close()
+       
+    return None
 
 def LinkEntries(Table: str, LipidInformation: dict) -> None:
     '''
@@ -238,11 +256,13 @@ def LinkEntries(Table: str, LipidInformation: dict) -> None:
     -------
     None: Linker table is not expected to return an ID
     '''
-
+    Query = "INSERT INTO `{}` (".format(Table) + \
+            ", ".join(map(lambda x: f'`{x}`', LipidInformation.keys())) + \
+            ") VALUES  (\"%d,%d\") "
     # Create a cursor
     with database.cursor() as cursor:
         # Execute the query creating a new entry
-        res = cursor.execute(SQL_Create(Table, LipidInformation))
+        res = cursor.execute(SQL_Create(Table, LipidInformation), list(LipidInformation.values()))
 
     # Commit the changes
     database.commit()
@@ -253,7 +273,7 @@ def LinkEntries(Table: str, LipidInformation: dict) -> None:
         
             
     
-    print("A new entry was created in {}: index {}".format(Table, LipidInformation))
+    #print("A new entry was created in {}: index {}".format(Table, LipidInformation))
     return None
 
 def CreateEntry(Table: str, LipidInformation: dict) -> int:
@@ -272,28 +292,30 @@ def CreateEntry(Table: str, LipidInformation: dict) -> int:
     int
         ID of the entry in the table. If it does not work, value will be 0.
     '''
-
+    ID = None
     # Create a cursor
     with database.cursor() as cursor:
         # Execute the query creating a new entry
-        res = cursor.execute(SQL_Create(Table, LipidInformation))
-
+        print(f"Executing query to create entry in {Table} with values {LipidInformation}")
+        res = cursor.execute(SQL_Create(Table, LipidInformation), tuple(LipidInformation.values()))
+        ID = cursor.lastrowid
     # Commit the changes
     database.commit()
+    cursor.close()
 
     # Num rows affected should be 1
     if res != 1:
         print("ERROR: record wasn't inserted!")
         print(LipidInformation)
-        return 0
+        raise RuntimeError("ERROR: record wasn't inserted!")
 
     # Check if the entry was created
-    ID = CheckEntry(Table, LipidInformation)
+    # Get the ID of the created entry
     # If there is not an ID, raise an error (the table was not created)
     if not ID:
         print("WARNING: Something may have gone wrong with the table {}".format(Table))
         print(LipidInformation)
-        return 0
+        raise RuntimeError("ERROR: record wasn't found after insertion!")
     # If an ID is obtained, the entry was created succesfuly
     else:
         print("A new entry was created in {}: index {}".format(Table, ID))
@@ -317,10 +339,23 @@ def UpdateEntry(Table: str, LipidInformation: dict, Condition: dict):
     # Create a cursor
     with database.cursor() as cursor:
         # Execute the query updating an entry
-        cursor.execute(SQL_Update(Table, LipidInformation, Condition))
-
-    # Commit the changes
-    database.commit()
+        query = SQL_Update(Table, LipidInformation, Condition)
+        composed_query_str = cursor.mogrify(query)
+        #print("Composed Query String (Before Execution):")
+        #print(composed_query_str)
+        try:
+            cursor.execute(query)
+            # Commit the changes
+            database.commit()
+        except pymysql.Error as err:
+            print(f"Error: {err}")
+            # You can also use it here to log the failed query:
+            print("Failed Query String:")
+            print(composed_query_str)
+            raise err
+        finally:
+            if cursor:
+                cursor.close()  
 
     return print("Entry {} in table {} was updated".format(Condition["id"], Table))
 
@@ -435,8 +470,20 @@ def load_lipid_metadata(metadata_path, database):
     }
     lipid_id = DBEntry('lipids', lipid_data, {'molecule': molecule_id})
 
+    # Insert synonyms
+    synonyms = bioschema.get('alternateNames', [])
+    for synonym in synonyms:
+        synonym_data = {
+            'lipid_id': lipid_id,
+            'synonym': synonym
+        }
+        CreateEntry('lipids_synonyms', synonym_data)
+        print ("Inserted synonym {} for lipid ID {}".format(synonym, lipid_id)) 
+
     # Insert bioschema properties as properties (optional, can be extended)
     for prop, value in bioschema.items():
+        if prop in ['@context', '@type', 'name', 'alternateName', 'description']:   
+            continue  # Skip non-property fields
         prop_data = {
             'name': prop,
             'description': '',
@@ -444,7 +491,7 @@ def load_lipid_metadata(metadata_path, database):
             'unit': '',
             'type': 'string'
         }
-        prop_id = DBEntry('properties', prop_data, {'name': prop, 'value': value})
+        prop_id = CreateEntry('properties', prop_data)
         # Link lipid and property
         LinkEntries('lipid_properties', {'lipid_id': lipid_id, 'property_id': prop_id})
         print ("Linked property {} to lipid ID {}".format(prop, lipid_id))
@@ -538,15 +585,18 @@ if __name__ == '__main__':
         # Get the DOI of the experiment and the path to the README.yaml file
         with open(osp.join(PATH_EXPERIMENTS_OP, expOP, 'README.yaml')) as File:
             README = yaml.load(File, Loader=yaml.FullLoader)
-
+        section_from_path = os.path.basename(os.path.normpath(expOP))
         for file in os.listdir(osp.join(PATH_EXPERIMENTS_OP, expOP)):
             if file.endswith(".json"):
 
-                LipidInfo = {"doi": README["DOI"],
-                        "path": genRpath(osp.join(PATH_EXPERIMENTS_OP, expOP, file))}
+                ExpInfo = {"article_doi": README.get("ARTICLE_DOI", README.get("DOI", ""))  ,
+                           "data_doi": README.get("DATA_DOI", ""),
+                           "section" : README.get("SECTION", section_from_path),
+                            "type" : "OP",
+                            "path": genRpath(osp.join(PATH_EXPERIMENTS_OP, expOP, file))}
 
                 # Entry in the DB with the LipidInfo of the experiment
-                Exp_ID = DBEntry('experiments_OP', LipidInfo, LipidInfo)
+                Exp_ID = DBEntry('experiments', ExpInfo, ExpInfo)
 
 
 # -- TABLE `experiments_FF`
@@ -567,19 +617,20 @@ if __name__ == '__main__':
         # Get the DOI of the experiment and the path to the README.yaml file
         with open(osp.join(PATH_EXPERIMENTS_FF, expFF, 'README.yaml')) as File:
             README = yaml.load(File, Loader=yaml.FullLoader)
-
+        section_from_path = os.path.basename(os.path.normpath(expFF))
         for file in os.listdir(osp.join(PATH_EXPERIMENTS_FF, expFF)):
             if file.endswith(".json"):
-
-                LipidInfo = {"doi": README["DOI"],
-                        "path": genRpath(osp.join(PATH_EXPERIMENTS_FF, expFF, file))}
-
+                ExpInfo = {"article_doi": README.get("ARTICLE_DOI", README.get("DOI", ""))  ,
+                           "data_doi": README.get("DATA_DOI", ""),
+                           "section" : README.get("SECTION", section_from_path),
+                            "type" : "FF",
+                            "path": genRpath(osp.join(PATH_EXPERIMENTS_FF, expFF, file))}
                 # Entry in the DB with the LipidInfo of the experiment
-                Exp_ID = DBEntry('experiments_FF', LipidInfo, LipidInfo)
+                Exp_ID = DBEntry('experiments', ExpInfo, ExpInfo)
 
     
     systems = dbl.core.initialize_databank()
-    
+    Skipped_Systems = []
     # Iterate over the loaded systems
     for _README in systems:
         README = _README.readme
@@ -601,18 +652,32 @@ if __name__ == '__main__':
                     'TPR', 'TRAJECTORY_SIZE', 'TRJ', 'TRJLENGTH', 'TYPEOFSYSTEM',
                     'WARNINGS', 'ID']:
                 if field not in README:
-                    README[field] = 0
+                    README[field] = None
+            if not README["FF"]:
+                # Skip this system if the forcefield is not defined
+                print("WARNING: The forcefield is not defined in the README file. ")
+                print("Skipping system: " + README["path"] + "\n")
+                Skipped_Systems.append(README["path"])
+                continue
+
+
 
     # -- TABLE `forcefields`
             # Collect the LipidInformation about the forcefield
-            LipidInfo = {
+            assert "FF" in README and README["FF"]
+            #"ERROR: The forcefield name is missing or invalid in the Simulation README file." + PATH_SIMULATION
+            #assert "FF_DATE" in README and README["FF_DATE"] , \
+            #"ERROR: The forcefield date is missing in the Simulation README file."  + README["path"]   
+            #assert "FF_SOURCE" in README, \
+            #"ERROR: The forcefield source is missing in the Simulation README file." + README["path"]   
+            FFInfo = {
                 "name":   README["FF"],
-                "date":   README["FF_DATE"],
-                "source": README["FF_SOURCE"]
+                "date":   README["FF_DATE"] or "Unknown",
+                "source": README["FF_SOURCE"] or "Unknown"
                 }
 
             # Entry in the DB with the LipidInfo of the FF
-            FF_ID = DBEntry('forcefields', LipidInfo, LipidInfo)
+            FF_ID = DBEntry('forcefields', FFInfo, FFInfo)
 
     # -- TABLE `lipids_forcefields`
             # Empty dictionaries for the LipidInfo of the lipids
@@ -1298,7 +1363,7 @@ if __name__ == '__main__':
                     # Iterate over the lipids
                     for mol in ExpOP:
                         # Check if there is an experiment associated to the lipid
-                        if ExpOP[mol]:
+                        if type(ExpOP[mol]) is dict:
                             for doi, path in ExpOP[mol].items():
                                 for file in os.listdir(
                                         osp.join(PATH_EXPERIMENTS_OP, path)):
@@ -1410,7 +1475,11 @@ if __name__ == '__main__':
             "\nThe following systems failed. Please check the files." +
             "\n" #+ "\n".join(FAILS)
             )
-
+    if len(Skipped_Systems) > 0:
+        print(
+            "\nThe following systems were skipped due to missing forcefield information:" +
+            "\n" + "\n".join(Skipped_Systems)
+            )
 ####################
 
     database.close()

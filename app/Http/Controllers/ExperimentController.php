@@ -14,7 +14,7 @@ class ExperimentController extends Controller
     {
         // Fetch experiment by DOI, section, and type
         $experiment = DB::table('experiments')
-            ->where('doi', $doi)
+            ->where('article_doi', $doi)
             ->where('section', $section)
             ->where('type', $type)
             ->first();
@@ -29,12 +29,28 @@ class ExperimentController extends Controller
             ->where('efl.experiment_id', $experiment->id)
             ->select('ep.name', 'ep.value', 'ep.unit', 'ep.type', 'ep.description')
             ->get();
+        // Fetch membrane composition property if exists
+        $membraneComposition = DB::table('experiments_membrane_composition as emc')
+            ->join('lipids as l', 'emc.lipid_id', '=', 'l.id')
+            ->where('emc.experiment_id', $experiment->id)
+            ->select('l.id','l.name', 'emc.mol_fraction',)
+            ->get();
+        // Fetch solution composition property if exists
+        $solutionComposition = DB::table('experiment_solution_composition as esc')
+            ->join('heteromolecules as h', 'esc.heteromolecule_id', '=', 'h.id')
+            ->where('esc.experiment_id', $experiment->id)
+            ->select('h.id','h.name', 'esc.concentration',)
+            ->get();    
 
         return View::make('experiment', [
-                'entity' => ['doi' => $experiment->doi, 
+                'entity' => ['doi' => $experiment->article_doi,
+                             'data_doi' => $experiment->data_doi,
                             'section' => $experiment->section, 
                             'path' => $experiment->path,
-                            'type' => $experiment->type],
+                            'type' => $experiment->type,
+                            'membrane_composition' => $membraneComposition,
+                            'solution_composition' => $solutionComposition,
+                            ],
                 'properties' => $properties,
         ]);
     }
