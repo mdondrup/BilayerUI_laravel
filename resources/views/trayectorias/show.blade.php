@@ -719,8 +719,8 @@ die();
                                                                <span class="txt-titulo">@lang('Water'):</span>
                                                                <span class="txt-dato">
 
-                                                                   {{ $trayectoria->modelos_acuaticos_num->map(function($water) {return "{$water->water_name}({$water->number})";})->implode(', ') }}
-
+                                                                   {{ $trayectoria->water_resname }} 
+                                                                   
                                                                   </span><br>
 
                                                             <span class="txt-titulo">@lang('Lipidos'):</span><br>

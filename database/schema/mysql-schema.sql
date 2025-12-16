@@ -495,6 +495,7 @@ CREATE TABLE `trajectories` (
   `timeleftout` double NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
+  `water_resname` varchar(8) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `forcefield_id` (`forcefield_id`),
   KEY `membrane_id` (`membrane_id`),
@@ -602,6 +603,7 @@ CREATE TABLE `trajectories_analysis_lipids` (
 DROP TABLE IF EXISTS `trajectories_analysis_water`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
+/*
 CREATE TABLE `trajectories_analysis_water` (
   `id` int NOT NULL AUTO_INCREMENT,
   `trajectory_id` int NOT NULL,
@@ -612,6 +614,7 @@ CREATE TABLE `trajectories_analysis_water` (
   KEY `id_2` (`id`),
   KEY `trajectory_id` (`trajectory_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+*/
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -754,6 +757,7 @@ CREATE TABLE `trajectories_membranes` (
 DROP TABLE IF EXISTS `trajectories_water`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
+/*
 CREATE TABLE `trajectories_water` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `trajectory_id` bigint unsigned NOT NULL,
@@ -766,8 +770,9 @@ CREATE TABLE `trajectories_water` (
   KEY `analysis_trajectory_id_foreign` (`trajectory_id`),
   KEY `Water_ID` (`water_id`) USING BTREE,
   CONSTRAINT `trajectories_water_ibfk_1` FOREIGN KEY (`trajectory_id`) REFERENCES `trajectories` (`id`),
-  CONSTRAINT `trajectories_water_ibfk_2` FOREIGN KEY (`water_id`) REFERENCES `water_models` (`id`)
+  -- CONSTRAINT `trajectories_water_ibfk_2` FOREIGN KEY (`water_id`) REFERENCES `water_models` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+*/
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -797,6 +802,7 @@ CREATE TABLE `users` (
 DROP TABLE IF EXISTS `water_models`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
+/*
 CREATE TABLE `water_models` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `short_name` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -805,6 +811,8 @@ CREATE TABLE `water_models` (
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+*/
+
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

@@ -2,20 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Agua;
 use App\Ion;
 use App\Lipido;
 use App\Molecula;
-use App\Peptido;
 use App\Trayectoria;
 use App\Membrana;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Redirector;
 // Added
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use Maatwebsite\Excel\Facades\Excel;
 
 class SearchController extends Controller
 {
@@ -66,7 +59,7 @@ class SearchController extends Controller
         $lipidos = Lipido::where('molecule', 'LIKE', "%$texto%")->get()->unique('molecule'); // Unique se usa por que los lipidos estan duplicados por el campo forcefield
         $moleculas = Molecula::where('molecule', 'LIKE', "%$texto%")->get()->unique('molecule');
         $iones = Ion::where('molecule', 'LIKE', "%$texto%")->get()->unique('molecule');
-        $agua = Agua::where('short_name', 'LIKE', "%$texto%")->get()->unique('short_name'); //->orWhere('short_name', 'LIKE', "%$texto%")
+        //$agua = Agua::where('short_name', 'LIKE', "%$texto%")->get()->unique('short_name'); //->orWhere('short_name', 'LIKE', "%$texto%")
         //$membrana = Membrana::where('name', 'LIKE', "%$texto%")->orWhere('lipid_names_l1', 'LIKE', "%$texto%")->orWhere('lipid_names_l2', 'LIKE', "%$texto%")->get();
 
        
@@ -77,7 +70,6 @@ class SearchController extends Controller
             // Busqueda REGEXP
             $membrana = Membrana::where('lipid_names_l1', 'regexp', $cadregexp)->orWhere('lipid_names_l2', 'regexp', $cadregexp)->get();
         }
-        //$agua = Agua::where('full_name', 'LIKE', "%$texto%")->get();
 
         $temperature = Trayectoria::where('temperature', 'LIKE', "%$texto%")->orderBy('temperature', 'asc')->get()->unique('temperature'); // Unique se usa por que los lipidos estan duplicados por el campo forcefield
         // dd(DB::getQueryLog());
@@ -90,7 +82,6 @@ class SearchController extends Controller
             'moleculas' => $moleculas,
             'iones' => $iones,
             'lipidos' => $lipidos,
-            'aguas' => $agua,
             'membranas' => $membrana,
             'temperatures' => $temperature, // new field to search
             //'sequence'=>$peptidosSequence,

@@ -2,9 +2,7 @@
 
 namespace App\Filtros;
 
-use App\Agua;
 use App\Trayectoria;
-use Illuminate\Database\Eloquent\Builder;
 
 class TrayectoriasFiltros extends Filtro
 {
