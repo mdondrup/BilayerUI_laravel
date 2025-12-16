@@ -62,6 +62,11 @@ parser.add_argument(
     "-s", "--systems", type=str, nargs='+',  # REQUIRED
     help=""" Path of the system(s). """)
 
+# Debug mode
+parser.add_argument(
+    "-d", "--debug", action='store_true',
+    help=''' Activate the debug mode. Default: %(default)s ''')     
+
 args = parser.parse_args()
 
 
@@ -209,7 +214,7 @@ def CheckEntry(Table: str, LipidInformation: dict = {}) -> int:
     with database.cursor() as cursor:
         # Find the ID(s) of the entry matching the condition
         values = tuple(LipidInformation.values())
-        #print(f"Executing query to check entry in {Table} with conditions {values}")
+        if args.debug: print(f"Executing query to check entry in {Table} with conditions {values}")
         # Use mogrify to get the composed query string as bytes
         query = SQL_Select(Table, ["id"], LipidInformation)
         composed_query_str = cursor.mogrify(query, values)
@@ -296,7 +301,7 @@ def CreateEntry(Table: str, LipidInformation: dict) -> int:
     # Create a cursor
     with database.cursor() as cursor:
         # Execute the query creating a new entry
-        print(f"Executing query to create entry in {Table} with values {LipidInformation}")
+        if args.debug: print(f"Executing query to create entry in {Table} with values {LipidInformation}")
         res = cursor.execute(SQL_Create(Table, LipidInformation), tuple(LipidInformation.values()))
         ID = cursor.lastrowid
     # Commit the changes
@@ -318,7 +323,7 @@ def CreateEntry(Table: str, LipidInformation: dict) -> int:
         raise RuntimeError("ERROR: record wasn't found after insertion!")
     # If an ID is obtained, the entry was created succesfuly
     else:
-        print("A new entry was created in {}: index {}".format(Table, ID))
+        if args.debug: print("A new entry was created in {}: index {}".format(Table, ID))
         return ID
 
 
@@ -341,8 +346,9 @@ def UpdateEntry(Table: str, LipidInformation: dict, Condition: dict):
         # Execute the query updating an entry
         query = SQL_Update(Table, LipidInformation, Condition)
         composed_query_str = cursor.mogrify(query)
-        #print("Composed Query String (Before Execution):")
-        #print(composed_query_str)
+        if args.debug: 
+            print("Composed Query String (Before Execution):")
+            print(composed_query_str)
         try:
             cursor.execute(query)
             # Commit the changes
@@ -356,8 +362,8 @@ def UpdateEntry(Table: str, LipidInformation: dict, Condition: dict):
         finally:
             if cursor:
                 cursor.close()  
-
-    return print("Entry {} in table {} was updated".format(Condition["id"], Table))
+    if args.debug: print("Entry {} in table {} was updated".format(Condition["id"], Table))
+    return None
 
 
 def DBEntry(Table: str, LipidInformation: dict, Minimal: dict = {}) -> tuple:
@@ -410,7 +416,7 @@ def DBEntry(Table: str, LipidInformation: dict, Minimal: dict = {}) -> tuple:
         # If the minimal LipidInformation and the total LipidInformation match,
         # no update is required.
         else:
-            print("It was not necessary to update entry {} in table {}"
+            if args.debug: print("It was not necessary to update entry {} in table {}"
                   .format(EntryID, Table))
             return EntryID
 
@@ -478,7 +484,7 @@ def load_lipid_metadata(metadata_path, database):
             'synonym': synonym
         }
         CreateEntry('lipids_synonyms', synonym_data)
-        print ("Inserted synonym {} for lipid ID {}".format(synonym, lipid_id)) 
+        if args.debug: print ("Inserted synonym {} for lipid ID {}".format(synonym, lipid_id)) 
 
     # Insert bioschema properties as properties (optional, can be extended)
     for prop, value in bioschema.items():
@@ -494,7 +500,7 @@ def load_lipid_metadata(metadata_path, database):
         prop_id = CreateEntry('properties', prop_data)
         # Link lipid and property
         LinkEntries('lipid_properties', {'lipid_id': lipid_id, 'property_id': prop_id})
-        print ("Linked property {} to lipid ID {}".format(prop, lipid_id))
+        if args.debug: print ("Linked property {} to lipid ID {}".format(prop, lipid_id))
 
     # Insert cross-references
     for db_name, ext_id in sameas.items():
@@ -560,7 +566,7 @@ if __name__ == '__main__':
         for file in files:
             if file.endswith("metadata.yaml"):
                 metadata_path = os.path.join(path, file)
-                print(f"Loading metadata from {metadata_path}")
+                if args.debug: print(f"Loading metadata from {metadata_path}")
                 load_lipid_metadata(metadata_path, database)
 
     # ...existing code...
@@ -630,22 +636,24 @@ if __name__ == '__main__':
 
     
     systems = dbl.core.initialize_databank()
-    Skipped_Systems = []
+    Skipped_Systems_FF = []
+    Skipped_Systems_AUTHOR = []
     # Iterate over the loaded systems
     for _README in systems:
         README = _README.readme
 
         try:
             # if True:
-            #print("\nCollecting data from system:")
-            #print(README["path"] + "\n")
+            if args.debug: 
+                print("\nCollecting data from system:")
+                print(README["path"] + "\n")
 
             # The location of the files
             PATH_SIMULATION = osp.join(NMLDB_SIMU_PATH, README["path"])
 
             # In the case a field in the README does not exist, set its value to 0
             for field in [
-                    'AUTHORS_CONTACT', 'COMPOSITION', 'CPT', 'DATEOFRUNNING', 'DIR_WRK',
+                    'AUTHORS_CONTACT', 'COMPOSITION', 'CPT', 'DATEOFRUNNING', 
                     'DOI', 'FF', 'FF_DATE', 'FF_SOURCE', 'GRO', 'LOG',
                     'NUMBER_OF_ATOMS', 'PREEQTIME', 'PUBLICATION', 'SOFTWARE',
                     'SOFTWARE_VERSION', 'SYSTEM', 'TEMPERATURE', 'TIMELEFTOUT', 'TOP',
@@ -655,11 +663,18 @@ if __name__ == '__main__':
                     README[field] = None
             if not README["FF"]:
                 # Skip this system if the forcefield is not defined
-                print("WARNING: The forcefield is not defined in the README file. ")
-                print("Skipping system: " + README["path"] + "\n")
-                Skipped_Systems.append(README["path"])
+                if args.debug:
+                    print("WARNING: The forcefield is not defined in the README file. ")
+                    print("Skipping system: " + README["path"] + "\n")
+                Skipped_Systems_FF.append(README["path"])
                 continue
-
+            if not README["AUTHORS_CONTACT"]:
+                # Skip this system if the forcefield is not defined
+                if args.debug: 
+                    print("WARNING: The AUTHOR is not defined in the README file. ")
+                    print("Skipping system: " + README["path"] + "\n")
+                Skipped_Systems_AUTHOR.append(README["path"])
+                continue
 
 
     # -- TABLE `forcefields`
@@ -727,7 +742,7 @@ if __name__ == '__main__':
                     # Find the position of the system in the ranking
                     for file in glob.glob(osp.join(PATH_RANKING, key) + "*"):
 
-                        # print(file)
+                        if args.debug: print("Processing ranking:", file)
 
                         # Kind of ranking (total, headgroup...)
                         kind = re.search('_(.*)_', file).group(1)
@@ -931,7 +946,7 @@ if __name__ == '__main__':
 
     # -- TABLE `trajectories`
             # Collect the LipidInformation about the simulation
-            LipidInfo = {
+            trajectoryInfo = {
                 "id":              README["ID"],
                 "forcefield_id":   FF_ID,
                 "membrane_id":     Mem_ID,
@@ -939,7 +954,6 @@ if __name__ == '__main__':
                 "system":          README["SYSTEM"],
                 "author":          README["AUTHORS_CONTACT"],
                 "date":            README["DATEOFRUNNING"],
-                "dir_wrk":         README["DIR_WRK"],
                 "doi":             README["DOI"],
                 "number_of_atoms": README["NUMBER_OF_ATOMS"],
                 "preeq_time":      README["PREEQTIME"],
@@ -961,7 +975,7 @@ if __name__ == '__main__':
                 }
 
             # Entry in the DB with the LipidInfo of the trajectory
-            Trj_ID = DBEntry('trajectories', LipidInfo, Minimal)
+            Trj_ID = DBEntry('trajectories', trajectoryInfo, Minimal)
 
     # -- TABLE `trajectories_lipids`
             TrjL_ID = {}
@@ -1413,7 +1427,7 @@ if __name__ == '__main__':
                                         _ = DBEntry('trajectories_experiments_FF',
                                                     LipidInfo, LipidInfo)
 
-        except FileNotFoundError as err:
+        except Exception as err:
             print("Exception loading system: "+ (err.__traceback__))
             FAILS.append(README["path"])
 
@@ -1432,7 +1446,7 @@ if __name__ == '__main__':
 
             missing_IDs = set(range(1, maxID+1)) - {ID[0] for ID in List_IDs}
 
-            LipidInfo = {
+            trajectoryInfo = {
                 "id":              1,
                 "forcefield_id":   1,
                 "membrane_id":     1,
@@ -1440,7 +1454,6 @@ if __name__ == '__main__':
                 "system":          "''",
                 "author":          "''",
                 "date":            "''",
-                "dir_wrk":         "''",
                 "doi":             "''",
                 "number_of_atoms": 0,
                 "preeq_time":      "''",
@@ -1454,32 +1467,39 @@ if __name__ == '__main__':
 
             for missing_ID in missing_IDs:
 
-                print("\n Adding missing ID:", missing_ID)
-                LipidInfo["id"] = missing_ID
+                print("WARNING: Adding missing ID:", missing_ID)
+                trajectoryInfo["id"] = missing_ID
 
                 cursor.execute(
                     "INSERT INTO `trajectories` (" +
-                    ','.join(map(lambda x: '`' + str(x) + '`', LipidInfo.keys())) +
+                    ','.join(map(lambda x: '`' + str(x) + '`', trajectoryInfo.keys())) +
                     ") VALUES (" +
-                    ','.join(map(str, LipidInfo.values())) +
+                    ','.join(map(str, trajectoryInfo.values())) +
                     ") "
                     )
 
         database.commit()
 
-    except Exception:
-        pass
+    except Exception as err:
+        print("Exception loading missing ID trajectory:", missing_ID, err.__traceback__)
+####################
 
     if FAILS:
         print(
             "\nThe following systems failed. Please check the files." +
-            "\n" #+ "\n".join(FAILS)
+            "\n" + "\n".join(FAILS)
             )
-    if len(Skipped_Systems) > 0:
+    if len(Skipped_Systems_FF) > 0:
         print(
             "\nThe following systems were skipped due to missing forcefield information:" +
-            "\n" + "\n".join(Skipped_Systems)
+            "\n" + "\n".join(Skipped_Systems_FF)
             )
+    if len(Skipped_Systems_AUTHOR) > 0:
+        print(
+            "\nThe following systems were skipped due to missing author information:" +
+            "\n" + "\n".join(Skipped_Systems_AUTHOR)
+            )
+    
 ####################
 
     database.close()
