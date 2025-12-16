@@ -529,12 +529,10 @@ TABLE_LIST = ["experiments_OP",
               "forcefields",
               "lipids",
               "ions",
-              "water_models",
               "heteromolecules",
               "membranes",
               "trajectories",
               "trajectories_lipids",
-              "trajectories_water",
               "trajectories_ions",
               "trajectories_heteromolecules",
               "trajectories_membranes",
@@ -542,7 +540,6 @@ TABLE_LIST = ["experiments_OP",
               "trajectories_analysis_lipids",
               "trajectories_analysis_heteromolecules",
               "trajectories_analysis_ions",
-              "trajectories_analysis_water",
               "ranking_global",
               "ranking_lipids",
               "ranking_heteromolecules",
@@ -560,88 +557,98 @@ if __name__ == '__main__':
     config = json.load(open(args.config, "r"))
     database = pymysql.connect(**config)
 
+    # Load the lipid and experiment metadata and cross-references only if no systems specified
+    if not args.systems:
     # Load lipid metadata and cross-references
-    data_path = os.path.join(NMLDB_MOL_PATH, 'membrane')
-    for path, _, files in os.walk(data_path):
-        for file in files:
-            if file.endswith("metadata.yaml"):
-                metadata_path = os.path.join(path, file)
-                if args.debug: print(f"Loading metadata from {metadata_path}")
-                load_lipid_metadata(metadata_path, database)
+        data_path = os.path.join(NMLDB_MOL_PATH, 'membrane')
+        for path, _, files in os.walk(data_path):
+            for file in files:
+                if file.endswith("metadata.yaml"):
+                    metadata_path = os.path.join(path, file)
+                    if args.debug: print(f"Loading metadata from {metadata_path}")
+                    load_lipid_metadata(metadata_path, database)
 
-    # ...existing code...
-    # 
-    #exit(0)
 
 # -- TABLE `experiments_OP`
 
-    # Find files with order parameters experiments
-    EXP_OP = []
-    PATH_EXPERIMENTS_OP = osp.join(NMLDB_EXP_PATH, "OrderParameters")
 
-    # Get the path to every README.yaml file with experimental data
-    for path, _, files in os.walk(PATH_EXPERIMENTS_OP):
-        for file in files:
-            if file.endswith("README.yaml"):
-                EXP_OP.append(osp.relpath(path, PATH_EXPERIMENTS_OP))
+        # Find files with order parameters experiments
+        EXP_OP = []
+        PATH_EXPERIMENTS_OP = osp.join(NMLDB_EXP_PATH, "OrderParameters")
 
-    # Iterate over each experiment
-    for expOP in EXP_OP:
+        # Get the path to every README.yaml file with experimental data
+        for path, _, files in os.walk(PATH_EXPERIMENTS_OP):
+            for file in files:
+                if file.endswith("README.yaml"):
+                    EXP_OP.append(osp.relpath(path, PATH_EXPERIMENTS_OP))
 
-        # Get the DOI of the experiment and the path to the README.yaml file
-        with open(osp.join(PATH_EXPERIMENTS_OP, expOP, 'README.yaml')) as File:
-            README = yaml.load(File, Loader=yaml.FullLoader)
-        section_from_path = os.path.basename(os.path.normpath(expOP))
-        for file in os.listdir(osp.join(PATH_EXPERIMENTS_OP, expOP)):
-            if file.endswith(".json"):
+        # Iterate over each experiment
+        for expOP in EXP_OP:
 
-                ExpInfo = {"article_doi": README.get("ARTICLE_DOI", README.get("DOI", ""))  ,
-                           "data_doi": README.get("DATA_DOI", ""),
-                           "section" : README.get("SECTION", section_from_path),
-                            "type" : "OP",
-                            "path": genRpath(osp.join(PATH_EXPERIMENTS_OP, expOP, file))}
+            # Get the DOI of the experiment and the path to the README.yaml file
+            with open(osp.join(PATH_EXPERIMENTS_OP, expOP, 'README.yaml')) as File:
+                README = yaml.load(File, Loader=yaml.FullLoader)
+            section_from_path = os.path.basename(os.path.normpath(expOP))
+            for file in os.listdir(osp.join(PATH_EXPERIMENTS_OP, expOP)):
+                if file.endswith(".json"):
 
-                # Entry in the DB with the LipidInfo of the experiment
-                Exp_ID = DBEntry('experiments', ExpInfo, ExpInfo)
+                    ExpInfo = {"article_doi": README.get("ARTICLE_DOI", README.get("DOI", ""))  ,
+                            "data_doi": README.get("DATA_DOI", ""),
+                            "section" : README.get("SECTION", section_from_path),
+                                "type" : "OP",
+                                "path": genRpath(osp.join(PATH_EXPERIMENTS_OP, expOP, file))}
+
+                    # Entry in the DB with the LipidInfo of the experiment
+                    Exp_ID = DBEntry('experiments', ExpInfo, ExpInfo)
 
 
-# -- TABLE `experiments_FF`
+    # -- TABLE `experiments_FF`
 
-    # Find files with form factor experiments
-    EXP_FF = []
-    PATH_EXPERIMENTS_FF = osp.join(NMLDB_EXP_PATH, "FormFactors")
+        # Find files with form factor experiments
+        EXP_FF = []
+        PATH_EXPERIMENTS_FF = osp.join(NMLDB_EXP_PATH, "FormFactors")
 
-    # Get the path to every README.yaml file with experimental data
-    for path, _, files in os.walk(PATH_EXPERIMENTS_FF):
-        for file in files:
-            if file.endswith("README.yaml"):
-                EXP_FF.append(osp.relpath(path, PATH_EXPERIMENTS_FF))
+        # Get the path to every README.yaml file with experimental data
+        for path, _, files in os.walk(PATH_EXPERIMENTS_FF):
+            for file in files:
+                if file.endswith("README.yaml"):
+                    EXP_FF.append(osp.relpath(path, PATH_EXPERIMENTS_FF))
 
-    # Iterate over each experiment
-    for expFF in EXP_FF:
+        # Iterate over each experiment
+        for expFF in EXP_FF:
 
-        # Get the DOI of the experiment and the path to the README.yaml file
-        with open(osp.join(PATH_EXPERIMENTS_FF, expFF, 'README.yaml')) as File:
-            README = yaml.load(File, Loader=yaml.FullLoader)
-        section_from_path = os.path.basename(os.path.normpath(expFF))
-        for file in os.listdir(osp.join(PATH_EXPERIMENTS_FF, expFF)):
-            if file.endswith(".json"):
-                ExpInfo = {"article_doi": README.get("ARTICLE_DOI", README.get("DOI", ""))  ,
-                           "data_doi": README.get("DATA_DOI", ""),
-                           "section" : README.get("SECTION", section_from_path),
-                            "type" : "FF",
-                            "path": genRpath(osp.join(PATH_EXPERIMENTS_FF, expFF, file))}
-                # Entry in the DB with the LipidInfo of the experiment
-                Exp_ID = DBEntry('experiments', ExpInfo, ExpInfo)
-
+            # Get the DOI of the experiment and the path to the README.yaml file
+            with open(osp.join(PATH_EXPERIMENTS_FF, expFF, 'README.yaml')) as File:
+                README = yaml.load(File, Loader=yaml.FullLoader)
+            section_from_path = os.path.basename(os.path.normpath(expFF))
+            for file in os.listdir(osp.join(PATH_EXPERIMENTS_FF, expFF)):
+                if file.endswith(".json"):
+                    ExpInfo = {"article_doi": README.get("ARTICLE_DOI", README.get("DOI", ""))  ,
+                            "data_doi": README.get("DATA_DOI", ""),
+                            "section" : README.get("SECTION", section_from_path),
+                                "type" : "FF",
+                                "path": genRpath(osp.join(PATH_EXPERIMENTS_FF, expFF, file))}
+                    # Entry in the DB with the LipidInfo of the experiment
+                    Exp_ID = DBEntry('experiments', ExpInfo, ExpInfo)
+  
+    # -- TABLE `forcefields`, `lipids_forcefields` and others
     
     systems = dbl.core.initialize_databank()
     Skipped_Systems_FF = []
     Skipped_Systems_AUTHOR = []
     # Iterate over the loaded systems
+    if args.debug: 
+        print("\nStarting the processing of the systems...\n")   
+        if args.systems:
+            print("Only the following systems will be processed:")
+            print(args.systems)
+            print("")
+
     for _README in systems:
         README = _README.readme
-
+        if args.systems:
+            if README["path"] not in args.systems:
+                continue
         try:
             # if True:
             if args.debug: 
@@ -808,21 +815,8 @@ if __name__ == '__main__':
                     # Store LipidInformation for further steps: Ions[name]=[ID,number]
                     Ions[key] = [Ion_ID, README["COMPOSITION"][key]["COUNT"]]
 
-    # -- TABLE `water_models`
-            if "SOL" in README["COMPOSITION"]:
-                WatName = README["COMPOSITION"]["SOL"]["NAME"]
-
-                WatNum = README["COMPOSITION"]["SOL"]["COUNT"]
-
-                # Collect the LipidInfo on the water
-                LipidInfo = {
-                    "short_name":    WatName,
-                    "mapping":       README["COMPOSITION"]["SOL"]["MAPPING"]
-                    }
-
-                # Get an entry in the DB with the LipidInfo of the water
-                Wat_ID = DBEntry('water_models', LipidInfo, LipidInfo)
-
+    
+          
     # -- TABLE `heteromolecules`
     # Heteromolecules are defined as the lipids for whom a distinction between the
     # different parts (headgroup, sn-1, sn-2) was not made. They could be included
@@ -946,6 +940,14 @@ if __name__ == '__main__':
 
     # -- TABLE `trajectories`
             # Collect the LipidInformation about the simulation
+            # Without water you have pure booze!
+            assert  README["COMPOSITION"], \
+            "ERROR: Composition is mandatory in the Simulation README file." + PATH_SIMULATION
+            if "SOL" not in README["COMPOSITION"]:
+                print("WARNING: Water is missing in the composition. ", file=sys.stderr)
+                print("Using IMPLICIT which is BAD!" + README["path"] + "\n", file=sys.stderr)
+                 
+
             trajectoryInfo = {
                 "id":              README["ID"],
                 "forcefield_id":   FF_ID,
@@ -962,7 +964,8 @@ if __name__ == '__main__':
                 "temperature":     README["TEMPERATURE"],
                 "timeleftout":     README["TIMELEFTOUT"],
                 "trj_size":        README["TRAJECTORY_SIZE"],
-                "trj_length":      README["TRJLENGTH"]
+                "trj_length":      README["TRJLENGTH"],
+                "water_resname":   README.get("COMPOSITION").get("SOL", {"NAME": "IMPLICIT"} ).get("NAME"),
                 }
 
             # The LipidInformation that defines the trajectory
@@ -998,23 +1001,7 @@ if __name__ == '__main__':
                 # Entry in the DB with the LipidInfo of the lipids in the simulation
                 TrjL_ID[lipid] = DBEntry('trajectories_lipids', LipidInfo, Minimal)
 
-    # -- TABLE `trajectories_water`
-            if "SOL" in README["COMPOSITION"]:
-                # Collect the LipidInformation of the water in the simulation
-                LipidInfo = {
-                    "trajectory_id": Trj_ID,
-                    "water_id":      Wat_ID,
-                    "water_name":    WatName,
-                    "number":        WatNum}
-
-                # The minimal LipidInformation of the water in the simulation
-                Minimal = {
-                    "trajectory_id": Trj_ID,
-                    "water_id":      Wat_ID}
-
-                # Entry in the DB with the LipidInfo of the water in the simulation
-                _ = DBEntry('trajectories_water', LipidInfo, Minimal)
-
+    
     # -- TABLE `trajectories_ions`
             TrjI_ID = {}
             for ion in Ions:
@@ -1217,18 +1204,6 @@ if __name__ == '__main__':
                 # Entry in the DB with the LipidInfo of the analysis of the ion in the
                 # simulation
                 _ = DBEntry('trajectories_analysis_ions', LipidInfo, LipidInfo)
-
-    # -- TABLE `trajectory_analysis_water`
-            if "SOL" in README["COMPOSITION"]:
-                # Collect the LipidInformation of the water in the simulation
-                LipidInfo = {"trajectory_id": Trj_ID,
-                        "water_id":      Wat_ID}
-                # -     "density_file":  args.densities_folder + README["path"]
-                # -                       + '/SOLdensity.xvg' }
-
-                # Entry in the DB with the LipidInfo of the analysis of the water in the
-                # simulation
-                _ = DBEntry('trajectories_analysis_water', LipidInfo, LipidInfo)
 
     # --- TEMPORAL -----
     # The table may be removed in the future, and the quality included in the
@@ -1481,7 +1456,7 @@ if __name__ == '__main__':
         database.commit()
 
     except Exception as err:
-        print("Exception loading missing ID trajectory:", missing_ID, err.__traceback__)
+        print("Exception loading missing ID trajectory:" + str(missing_ID), (err.__traceback__))
 ####################
 
     if FAILS:

@@ -4,15 +4,9 @@ namespace App;
 
 use App\Lib\Coleccion;
 use App\TrayectoriaAnalisisLipidos;
-use App\TrajectoriesExperimentsFF;
-use App\TrajectoriesExperimentsOP;
+
 use App\RankingHeteromolecules;
 use App\RankingLipids;
-
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
-
-use Illuminate\Support\Facades\DB;
 
 /**
  * Class Trayectoria
@@ -136,13 +130,8 @@ class Trayectoria extends AppModel
 
 
 
-    function modelos_acuaticos() {
-        return $this->belongsToMany(Agua::class, TrayectoriasAgua::getTableName());
-    }
-
-    function modelos_acuaticos_num() {
-        return $this->hasMany(TrayectoriasAgua::class);
-    }
+   
+   
 
     function moleculas() {
         //return $this->belongsToMany(Molecula::class, TrayectoriasHeteromoleculas::getTableName())->withPivot('leaflet_1', 'leaflet_2', 'bulk');
