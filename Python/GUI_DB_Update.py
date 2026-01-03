@@ -428,33 +428,7 @@ def DBEntry(Table: str, LipidInformation: dict, Minimal: dict = {}) -> tuple:
         return EntryID
 
 
-def ResetTable(Table: str):
-    '''
-    Remove the content of a table and reset the index
 
-    Parameters
-    ----------
-    Table : str
-        Name of the table.
-
-    Returns
-    -------
-    None.
-
-    '''
-
-    # Create a cursor
-    with database.cursor() as cursor:
-        cursor.execute(f' DELETE FROM `{Table}`')
-        cursor.execute(f'ALTER TABLE `{Table}` AUTO_INCREMENT=1')
-
-    return
-
-
-
-
-import yaml
-import os
 
 # --- Load lipid metadata and insert cross-references ---
 def load_lipid_metadata(metadata_path, database):
