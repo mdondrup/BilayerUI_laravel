@@ -568,15 +568,7 @@ use Illuminate\Support\Collection;
         $MemNameAssoc[$value['molecule']] = $value['name'];
         $RealNameAsoc = $RealNameAsoc . "'" . $value['molecule'] . "':'" . $value['name'] . "',";
     }
-    /*
-var_dump($trayectoria->TrayectoriasHeteromoleculasMolecule);
-die();
-*/
-
-    foreach ($trayectoria->moleculas as $key => $value) {
-        $MemNameAssoc[$value['molecule']] = $value['name'];
-        $RealNameAsoc = $RealNameAsoc . "'" . $value['molecule'] . "':'" . $value['name'] . "',";
-    }
+    
 
     $colorList = ['#FF9AA2', '#C7CEEA', '#FFB7B2', '#B5EAD7', '#FFDAC1', '#E2F0CB', '#FF9AA2', '#C7CEEA', '#FFB7B2', '#B5EAD7', '#FFDAC1', '#E2F0CB'];
     //$colorList = array('#C82842','#F08041','#FEC544','__#6BAC2E','#055B4E','#FF00FF','#FF3300','#663300');
@@ -708,7 +700,7 @@ die();
                                                             <span class="txt-titulo">{{ c('software') }}:</span>
                                                             <span class="txt-dato">{{ $trayectoria->software }} </span><br>
 
-                                                            <!--<span class="txt-titulo">@lang('Heteromoléculas'):</span><span class="txt-dato">  {{ $trayectoria->moleculas->implode('name', ', ') }}</span><br>-->
+                                                          
                                                             <span class="txt-titulo">@lang('Iones'):</span>
                                                             <span class="txt-dato">
 
@@ -869,55 +861,8 @@ die();
                                         <?php
                                     } // Foreach End
                                     ?>
-                                        <!--  </div>-->
 
-
-                                        <!--<div class="row justify-content">-->
-                                        <?php
-                                    $col = 0;
-                                    foreach ($trayectoria->moleculas as $heteromol) {
-                                        //$gifFile = $lipido->forcefield_id."/".$lipido->short_name.".gif";
-                                        //$pathlip = asset('storage/forcefields/'.$gifFile);
-                                    ?>
-                                        <div class="col-xs-12 col-lg-6 d-flex flex-wrap cardlipids">
-
-                                            <div class=" m-2 w-100" style="width: 18rem;">
-                                                <div class=" ">
-                                                    <h5 class=" ">{{ $heteromol->molecule }}</h5>
-                                                    <!-- TODO: The mapping is no longer tied to a molecule directly -->
-                                                    <!-- As there is there is a many to many relationship, we need a more complicated approach -->
-                                                    <!--<span> Ranking total </span>-->
-                                                    <?php
-                                                    $mappingFile = $heteromol->mapping;
-                                                    $pathToScr = $pathToScr =$GitHubURL . 'Molecules/membrane/' . $heteromol->molecule .'/'. $mappingFile;
-                                                    
-                                                    
-                                                    echo '<a href="' .   $pathToScr  . '" title="Download Mapping file" target="_blank">';
-                                                    echo '<span ><b>Download Mapping file</b>  </span></br>';
-                                                    echo '</a>';
-                                                    foreach ($trayectoria->ranking_heteromolecules as $ranking_hetero) {
-                                                        if ($ranking_hetero->molecule_id == $heteromol->id) {
-                                                            //echo($ranking_hetero->ranking_total);
-                                                            //echo("<br><span> Quality total </span>");
-                                                            //echo($ranking_hetero->quality_total);
-                                                            echo '<span>Quality (ranking)</span><br>';
-                                                            echo '<ul>';
-                                                            echo '<li>Headgroups : ' . filtraValor($ranking_hetero->quality_hg) . ' ( ' . filtraValor($ranking_hetero->ranking_hg) . ' )</li>';
-                                                            echo '<li>Tail : ' . filtraValor($ranking_hetero->quality_tails) . ' ( ' . filtraValor($ranking_hetero->ranking_tails) . ' )</li>';
-                                                            echo '</ul>';
-                                                        }
-                                                    }
-
-                                                    ?>
-                                                </div>
-                                            </div>
-                                        </div> <!--  CARD loop end-->
-
-                                        <?php
-                                    } // Foreach End
-                                    ?>
                                     </div>
-
                                 </div>
                             </div>
 

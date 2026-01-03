@@ -57,7 +57,7 @@ class SearchController extends Controller
         //$peptidosSequence = Peptido::where('sequence', 'LIKE', "%$texto%")->get();
         //$lipidos = Lipido::where('full_name', 'LIKE', "%$texto%")->get();
         $lipidos = Lipido::where('molecule', 'LIKE', "%$texto%")->get()->unique('molecule'); // Unique se usa por que los lipidos estan duplicados por el campo forcefield
-        $moleculas = Molecula::where('molecule', 'LIKE', "%$texto%")->get()->unique('molecule');
+        //$moleculas = Molecula::where('molecule', 'LIKE', "%$texto%")->get()->unique('molecule');
         $iones = Ion::where('molecule', 'LIKE', "%$texto%")->get()->unique('molecule');
         //$agua = Agua::where('short_name', 'LIKE', "%$texto%")->get()->unique('short_name'); //->orWhere('short_name', 'LIKE', "%$texto%")
         //$membrana = Membrana::where('name', 'LIKE', "%$texto%")->orWhere('lipid_names_l1', 'LIKE', "%$texto%")->orWhere('lipid_names_l2', 'LIKE', "%$texto%")->get();
@@ -79,7 +79,7 @@ class SearchController extends Controller
             'cadregexp' => $cadregexp,
             'claves' => $claves,
             //'peptidos' => $peptidos,
-            'moleculas' => $moleculas,
+            //'moleculas' => $moleculas,
             'iones' => $iones,
             'lipidos' => $lipidos,
             'membranas' => $membrana,

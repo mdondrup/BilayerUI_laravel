@@ -43,15 +43,7 @@ class Trayectoria extends AppModel
 
     }
 
-    function ranking_heteromolecules() {
-
-      //DB::enableQueryLog();
-      $rankingHeteromol = $this->hasMany(RankingHeteromolecules::class);
-      //dd(DB::getQueryLog());
-      return $rankingHeteromol;
-
-    }
-
+    
 
     function ranking_lipids() {
       //DB::enableQueryLog();
@@ -62,23 +54,13 @@ class Trayectoria extends AppModel
     }
 
 
-    function TrayectoriasAnalysisHeteromoleculas() {
-      //$ranking_global = $this->belongsToMany(Lipido::class, TrayectoriasLipidos::getTableName())->withPivot('leaflet_1', 'leaflet_2');
-      //dd(DB::getQueryLog());
-      return $this->hasOne(TrayectoriasAnalysisHeteromoleculas::class);
-    }
+    
 
     function TrayectoriaAnalisisLipidosfunc() {
       return $this->hasMany(TrayectoriaAnalisisLipidos::class);
     }
 
-    function TrayectoriasHeteromoleculas() {
-      return $this->hasOne(TrayectoriasHeteromoleculas::class);
-    }
-    function TrayectoriasHeteromoleculasMolecule() {
-      $heteromoleculeData =$this->belongsToMany(Molecula::class, TrayectoriasHeteromoleculas::getTableName());
-      return $heteromoleculeData;
-    }
+  
 
 
     function lipidos() {
@@ -127,21 +109,7 @@ class Trayectoria extends AppModel
     function iones_num() {
         return $this->hasMany(TrayectoriasIones::class);//->withPivot('bulk');
     }
-
-
-
-   
-   
-
-    function moleculas() {
-        //return $this->belongsToMany(Molecula::class, TrayectoriasHeteromoleculas::getTableName())->withPivot('leaflet_1', 'leaflet_2', 'bulk');
-        return $this->belongsToMany(Molecula::class, TrayectoriasHeteromoleculas::getTableName());//->withPivot('leaflet_1', 'leaflet_2');
-    }
-
-
-    //return $this->belongsTo('App\Membrana', 'membrane_id');
-    //$resaa = $this->belongsTo('App\TrayectoriasMembranas', 'id','membrane_id')->dd();
-
+    
     function membranas() {
       //dd(TrayectoriasMembranas::getTableName());
         //$res = $this->belongsToMany(Membrana::class, TrayectoriasMembranas::getTableName());
