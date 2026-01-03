@@ -14,6 +14,7 @@ Modified on June-September 2025
 import os
 import os.path as osp
 import re
+import traceback
 import sys
 import glob
 import json
@@ -521,7 +522,8 @@ def load_lipid_metadata(metadata_path, database):
         LinkEntries('cross_references', crossref_data)
 
 # The list of molecules in the membrane whose structure is not a phospholipid
-HETEROMOLECULES_LIST = ["CHOL", "DCHOL", "C20", "C30"]
+# Removed this by request of Alex, this is not needed anymore and was wrong
+
 FAILS = []
 
 TABLE_LIST = ["experiments_OP",
@@ -529,20 +531,16 @@ TABLE_LIST = ["experiments_OP",
               "forcefields",
               "lipids",
               "ions",
-              "heteromolecules",
               "membranes",
               "trajectories",
               "trajectories_lipids",
               "trajectories_ions",
-              "trajectories_heteromolecules",
               "trajectories_membranes",
               "trajectories_analysis",
               "trajectories_analysis_lipids",
-              "trajectories_analysis_heteromolecules",
               "trajectories_analysis_ions",
               "ranking_global",
               "ranking_lipids",
-              "ranking_heteromolecules",
               "trajectories_experiments_OP",
               "trajectories_experiments_FF"
               ]
@@ -636,6 +634,8 @@ if __name__ == '__main__':
     systems = dbl.core.initialize_databank()
     Skipped_Systems_FF = []
     Skipped_Systems_AUTHOR = []
+    Linked_Experiments_OP = []
+    Linked_Experiments_FF = []
     # Iterate over the loaded systems
     if args.debug: 
         print("\nStarting the processing of the systems...\n")   
@@ -659,6 +659,8 @@ if __name__ == '__main__':
             PATH_SIMULATION = osp.join(NMLDB_SIMU_PATH, README["path"])
 
             # In the case a field in the README does not exist, set its value to 0
+            README["AUTHORS_CONTACT"] = README.get("AUTHORS_CONTACT", README.get("AUTHOR", "Unknown author"))
+            README["FF"] = README.get("FF", "Unknown FF")
             for field in [
                     'AUTHORS_CONTACT', 'COMPOSITION', 'CPT', 'DATEOFRUNNING', 
                     'DOI', 'FF', 'FF_DATE', 'FF_SOURCE', 'GRO', 'LOG',
@@ -709,7 +711,7 @@ if __name__ == '__main__':
             Lipid_Quality = {}
             # Find the lipids in the composition
             for key in README["COMPOSITION"]:
-                if key in NMRDict.lipids_set and key not in HETEROMOLECULES_LIST:
+                if key in NMRDict.lipids_set:
                     # Save the quality of the lipid
                     Store = True
 
@@ -743,7 +745,6 @@ if __name__ == '__main__':
     # this part can be deleted and just read the quality (try at the end of this
     # part). At this moment the ranking is not necessary in the DB, the web
     # already provides the result sorted by quality.
-    # Same for the heteromolecules.
                     PATH_RANKING = osp.join(NMLDB_DATA_PATH, "Ranking",)
                     Lipid_Ranking[key] = {}
                     # Find the position of the system in the ranking
@@ -799,8 +800,7 @@ if __name__ == '__main__':
             Ions = {}
             # Find the ions in the composition
             for key in README["COMPOSITION"]:
-                if key in NMRDict.molecules_set and key != "SOL" and \
-                        key not in HETEROMOLECULES_LIST:
+                if key in NMRDict.molecules_set and key != "SOL": 
                     # Collect the LipidInfo of the ions
                     LipidInfo = {
                         "forcefield_id": FF_ID,
@@ -817,96 +817,20 @@ if __name__ == '__main__':
 
     
           
-    # -- TABLE `heteromolecules`
-    # Heteromolecules are defined as the lipids for whom a distinction between the
-    # different parts (headgroup, sn-1, sn-2) was not made. They could be included
-    # in the lipids table and leaving some fields empty.
-
-            # Empty dictionaries for the LipidInfo of the heteromolecules
-            Heteromolecules = {}
-            Heteromolecules_ID = {}
-            Heteromolecules_Ranking = {}
-
-            # Form factor
-            Store = True
-            Heteromolecules_Quality = {}
-
-            # Find the heteromolecules in the composition
-            for key in README["COMPOSITION"]:
-                if key in NMRDict.lipids_set and key in HETEROMOLECULES_LIST:
-
-                    # Collect the LipidInfo of the lipids
-                    LipidInfo = {
-                        "forcefield_id": FF_ID,
-                        "molecule":      key,
-                        "name":          README["COMPOSITION"][key]["NAME"],
-                        "mapping":       README["COMPOSITION"][key]["MAPPING"]
-                        }
-
-                    # Entry in the DB with the LipidInfo of the heteromolecules
-                    Mol_ID = DBEntry('heteromolecules', LipidInfo, LipidInfo)
-
-                    # Store LipidInformation for further steps
-                    Heteromolecules[key] = README["COMPOSITION"][key]["COUNT"]
-                    Heteromolecules_ID[key] = Mol_ID
-
-    # --- TEMPORAL -----
-    # See the lipids table for the reasons
-                    
-                    Heteromolecules_Ranking[key] = {}
-
-                    # Find the position of the system in the raking
-                    for file in glob.glob(osp.join(PATH_RANKING, key) + "*"):
-
-                        # Type of ranking
-                        kind = re.search('_(.*)_', file).group(1)
-
-                        # Open the ranking file
-                        with open(file) as FILE:
-                            RANKING_LIST = json.load(FILE)
-
-                            # Find the position of the system in the ranking
-                            for SIM in range(len(RANKING_LIST)):
-                                if README["path"] in \
-                                        RANKING_LIST[SIM]["system"]["path"]:
-                                    Heteromolecules_Ranking[key][kind] = SIM + 1
-
-                                    if Store:
-                                        Heteromolecules_Quality[key] = \
-                                            RANKING_LIST[SIM][key]
-                                        Store = False
-
-                            # If it does not have an assigned value, use None
-                            if kind not in Heteromolecules_Ranking[key]:
-                                Heteromolecules_Ranking[key][kind] = 0
-
-                    try:
-                        with open(osp.join(PATH_SIMULATION,
-                                           key + '_FragmentQuality.json')) as FILE:
-                            Heteromolecules_Quality[key] = json.load(FILE)
-                    except Exception:
-                        Heteromolecules_Quality[key] = {
-                            "total": 0,
-                            "headgroup": 0,
-                            "tail": 0
-                            }
-
-                    for t in ["total", "headgroup", "tail"]:
-                        try:
-                            Heteromolecules_Quality[key][t] = \
-                                Heteromolecules_Quality[key][t] \
-                                if not np.isnan(Heteromolecules_Quality[key][t])\
-                                else 0
-                        except Exception:
-                            Heteromolecules_Quality[key][t] = 0
-    # ------------------
-        
+   
     # -- TABLE `membranes`
             # Find the proportion of each lipid in the leaflets
             Names = [[], []]
             Number = [[], []]
 
             for lipid in Lipids:
+                if args.debug:
+                    print("Processing lipid in membrane:", lipid, Lipids[lipid])
+                if len(Lipids[lipid]) != 2:
+                    raise RuntimeError("ERROR: Lipid COUNT fields must be a list of two values " +
+                                       "for leaflet 1 and leaflet 2 respectively. " +
+                                       "Check the COMPOSITION field in the README file. " +
+                                       PATH_SIMULATION)    
                 if Lipids[lipid][0]:
                     Names[0].append(lipid)
                     Number[0].append(str(Lipids[lipid][0]))
@@ -914,13 +838,7 @@ if __name__ == '__main__':
                     Names[1].append(lipid)
                     Number[1].append(str(Lipids[lipid][1]))
 
-            for hetero in Heteromolecules:
-                if Heteromolecules[hetero][0]:
-                    Names[0].append(hetero)
-                    Number[0].append(str(Heteromolecules[hetero][0]))
-                if Heteromolecules[hetero][1]:
-                    Names[1].append(hetero)
-                    Number[1].append(str(Heteromolecules[hetero][1]))
+            
 
             Names = [':'.join(Names[0]), ':'.join(Names[1])]
             Number = [':'.join(Number[0]), ':'.join(Number[1])]
@@ -941,11 +859,14 @@ if __name__ == '__main__':
     # -- TABLE `trajectories`
             # Collect the LipidInformation about the simulation
             # Without water you have pure booze!
-            assert  README["COMPOSITION"], \
-            "ERROR: Composition is mandatory in the Simulation README file." + PATH_SIMULATION
+            if not README.get("COMPOSITION") or not isinstance(README.get("COMPOSITION"), dict):
+                raise RuntimeError( 
+                "ERROR: COMPOSITION section is mandatory and must be a dictionary of lipids\n" +
+                "Check the simulation README file in " +
+                PATH_SIMULATION)
             if "SOL" not in README["COMPOSITION"]:
                 print("WARNING: Water is missing in the composition. ", file=sys.stderr)
-                print("Using IMPLICIT which is BAD!" + README["path"] + "\n", file=sys.stderr)
+                print("Using IMPLICIT as drop in replacement which is BAD! Check README file in", README["path"],"\n", file=sys.stderr)
                  
 
             trajectoryInfo = {
@@ -1005,6 +926,14 @@ if __name__ == '__main__':
     # -- TABLE `trajectories_ions`
             TrjI_ID = {}
             for ion in Ions:
+                if args.debug:
+                    print("Processing ion:", ion, Ions[ion])
+                if len(Ions[ion]) != 2:
+                    raise RuntimeError("ERROR: Ion counts must be a list of two values " +
+                                       "for leaflet 1 and leaflet 2 respectively. " +
+                                       "Check the COMPOSITION field in the README file. " +
+                                       PATH_SIMULATION)
+
                 # Collect the LipidInformation of each ion in the simulation
                 LipidInfo = {
                     "trajectory_id": Trj_ID,
@@ -1020,26 +949,7 @@ if __name__ == '__main__':
                 # Entry in the DB with the LipidInfo of the ions in the simulation
                 TrjI_ID[ion] = DBEntry('trajectories_ions', LipidInfo, Minimal)
 
-    # -- TABLE `trajectories_heteromolecules`
-            TrjM_ID = {}
-            for hetero in Heteromolecules:
-                # Collect the LipidInformation of each heteromolecule in the simulation
-                LipidInfo = {
-                    "trajectory_id": Trj_ID,
-                    "molecule_id":   Heteromolecules_ID[hetero],
-                    "molecule_name": hetero,
-                    "leaflet_1":     Heteromolecules[hetero][0],
-                    "leaflet_2":     Heteromolecules[hetero][1]
-                    }
-
-                # The minimal LipidInformation that identifies the heteromolecule
-                Minimal = {
-                    "trajectory_id": Trj_ID,
-                    "molecule_id":   Heteromolecules_ID[hetero]}
-
-                # Entry in the DB with the LipidInfo of the heteromolecules in the simulation
-                TrjM_ID[hetero] = DBEntry('trajectories_heteromolecules', LipidInfo, Minimal)
-
+   
     # -- TABLE `trajectories_membranes``
 
             LipidInfo = {
@@ -1153,44 +1063,7 @@ if __name__ == '__main__':
                 # in the simulation
                 _ = DBEntry('trajectories_analysis_lipids', LipidInfo, Minimal)
 
-    # -- TABLE `trajectories_analysis_heteromolecules`
-            for hetero in Heteromolecules:
-                try:
-                    OPExp = genRpath(
-                        osp.join(
-                            PATH_EXPERIMENTS_OP,
-                            list(README["EXPERIMENT"]["ORDERPARAMETER"][hetero]
-                                 .values())[0],
-                            hetero + '_Order_Parameters.json')
-                        )
-                except Exception:
-                    OPExp = ''
-
-                # Collect the LipidInformation of each heteromolecule in the simulation
-                LipidInfo = {
-                    "trajectory_id":   Trj_ID,
-                    "molecule_id":     Heteromolecules_ID[hetero],
-                    "quality_total":   Heteromolecules_Quality[hetero]["total"],
-                    "quality_hg":      Heteromolecules_Quality[hetero]["headgroup"],
-                    "quality_tails":   Heteromolecules_Quality[hetero]["tail"],
-                    "order_parameters_file": genRpath(
-                        osp.join(NMLDB_SIMU_PATH, README["path"],
-                                 hetero + 'OrderParameters.json')),
-                    "order_parameters_experiment":  OPExp,
-                    "order_parameters_quality":     genRpath(
-                        osp.join(NMLDB_SIMU_PATH, README["path"],
-                                 hetero + '_OrderParameters_quality.json'))
-                    }
-
-                # The minimal LipidInformation that identifies the heteromolecule in the
-                # simulation
-                Minimal = {"trajectory_id": Trj_ID,
-                           "molecule_id":   Heteromolecules_ID[hetero]}
-
-                # Entry in the DB with the LipidInfo of the analysis of the heteromolecule
-                # in the simulation
-                _ = DBEntry('trajectories_analysis_heteromolecules', LipidInfo, Minimal)
-
+   
     # -- TABLE `trajectory_analysis_ions`
             for ion in Ions:
                 # Collect the LipidInformation of the ions in the simulation
@@ -1299,72 +1172,37 @@ if __name__ == '__main__':
                 _ = DBEntry('ranking_lipids', LipidInfo, Minimal)
     # ------------------
             
-    # -- TABLE `ranking_heteromolecules`
-            # Empty dictionary for the ranking
-            Ranking_heteromolecules = {}
-
-            for hetero in Heteromolecules:
-                Ranking_heteromolecules[hetero] = {}
-
-                for file in glob.glob(osp.join(PATH_RANKING, hetero) + "*"):
-                    # Type of ranking
-                    kind = re.search('_(.*)_', file).group(1)
-
-                    # Open the ranking file
-                    with open(file) as FILE:
-                        RANKING_LIST = json.load(FILE)
-
-                        # Find the position of the system in the ranking
-                        for SIM in range(len(RANKING_LIST)):
-                            if README["path"] in RANKING_LIST[SIM]["system"]["path"]:
-                                Ranking_heteromolecules[hetero][kind] = SIM + 1
-
-                for t in ["total", "headgroup", "tail"]:
-                    try:
-                        Ranking_heteromolecules[hetero][t] = \
-                            Ranking_heteromolecules[hetero][t] \
-                            if not np.isnan(Ranking_heteromolecules[hetero][t])\
-                            else 4242
-                    except Exception:
-                        Ranking_heteromolecules[hetero][t] = 4242
-
-                # Collect the LipidInformation of the position of the system in the ranking
-                LipidInfo = {
-                    "trajectory_id": Trj_ID,
-                    "molecule_id":   Heteromolecules_ID[hetero],
-                    "ranking_total": Ranking_heteromolecules[hetero]["total"],
-                    "quality_total": Heteromolecules_Quality[hetero]["total"]
-                    }
-
-                # The minimal LipidInformation about the system
-                Minimal = {"trajectory_id": Trj_ID,
-                           "molecule_id":      Heteromolecules_ID[hetero]}
-
-                # Entry in the DB with the LipidInfo of ranking
-                _ = DBEntry('ranking_heteromolecules', LipidInfo, Minimal)
-    # ------------------
+   
             if "EXPERIMENT" in README:
-                if "ORDERPARAMETER" in README["EXPERIMENT"]:
+                if "ORDERPARAMETER" in README.get("EXPERIMENT", {}):
                     # -- TABLE `trajectories_experiments_OP`
                     # The Order Parameters experiments associated to the simulation
 
                     ExpOP = README["EXPERIMENT"]["ORDERPARAMETER"]
+                    if args.debug:
+                        print("Found ORDERPARAMETER experiments for system: " +
+                            README["path"])   
                     # Iterate over the lipids
                     for mol in ExpOP:
                         # Check if there is an experiment associated to the lipid
                         if type(ExpOP[mol]) is dict:
+                           
                             for doi, path in ExpOP[mol].items():
                                 for file in os.listdir(
                                         osp.join(PATH_EXPERIMENTS_OP, path)):
                                     if file.endswith(".json"):
+                                        if args.debug:
+                                            print("Linking trajectory {} with experiment {} for lipid {}".format(
+                                                Trj_ID, doi, mol))
+                                        Linked_Experiments_OP.append(README["path"] + ":" + mol +" ID:" + str(Trj_ID))
+                                        
                                         LipidInfo = {
                                             "trajectory_id": Trj_ID,
-                                            "lipid_id": {**Lipids_ID,
-                                                         **Heteromolecules_ID}[mol],
+                                            "lipid_id": Lipids_ID[mol],
                                             "experiment_id":
                                                 CheckEntry(
                                                   'experiments_OP', {
-                                                      "doi": doi,
+                                                      "article_doi": doi,
                                                       "path": genRpath(osp.join(
                                                           PATH_EXPERIMENTS_OP,
                                                           path, file))
@@ -1374,9 +1212,17 @@ if __name__ == '__main__':
 
                                         _ = DBEntry('trajectories_experiments_OP',
                                                     LipidInfo, LipidInfo)
-
+                        
+                else:
+                    if args.debug:
+                        print("WARNING: No ORDERPARAMETER experiments found for system: " +
+                              README["path"], file=sys.stderr)  
+            else:
+                if args.debug:
+                    print("WARNING: No EXPERIMENT section found for system: " +
+                      README["path"], file=sys.stderr)                
     # -- TABLE `trajectories_experiments_FF`
-                if "FORMFACTOR" in README["EXPERIMENT"]:
+                if "FORMFACTOR" in README.get("EXPERIMENT", {}):
                     # The Form Factor experiments associated to the simulation
                     ExpFF = README["EXPERIMENT"]["FORMFACTOR"]
 
@@ -1403,7 +1249,11 @@ if __name__ == '__main__':
                                                     LipidInfo, LipidInfo)
 
         except Exception as err:
-            print("Exception loading system: "+ (err.__traceback__))
+            print ("------------------------------------------------------\n", file=sys.stderr)
+            print("Exception loading system:" + README["path"], file=sys.stderr)
+            traceback.print_exc()
+            print ("------------------------------------------------------\n", file=sys.stderr)
+
             FAILS.append(README["path"])
 
     # -- TABLE `trajectories` (again)
@@ -1442,7 +1292,7 @@ if __name__ == '__main__':
 
             for missing_ID in missing_IDs:
 
-                print("WARNING: Adding missing ID:", missing_ID)
+                #print("WARNING: Adding missing ID:", missing_ID, file=sys.stderr)
                 trajectoryInfo["id"] = missing_ID
 
                 cursor.execute(
@@ -1456,7 +1306,8 @@ if __name__ == '__main__':
         database.commit()
 
     except Exception as err:
-        print("Exception loading missing ID trajectory:" + str(missing_ID), (err.__traceback__))
+        print("Exception loading missing ID trajectory:" + str(missing_ID))
+        traceback.print_exc()
 ####################
 
     if FAILS:
@@ -1473,6 +1324,10 @@ if __name__ == '__main__':
         print(
             "\nThe following systems were skipped due to missing author information:" +
             "\n" + "\n".join(Skipped_Systems_AUTHOR)
+            )
+    if len(Linked_Experiments_OP) >= 0:
+        print(
+            len(Linked_Experiments_OP), "ORDERPARAMETER experiments were linked to simulations."
             )
     
 ####################

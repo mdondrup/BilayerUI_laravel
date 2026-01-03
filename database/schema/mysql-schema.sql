@@ -67,6 +67,7 @@ DROP VIEW IF EXISTS `experiments_FF`;
 CREATE VIEW `experiments_FF` AS
  SELECT `experiments`.`id` AS `id`,
     `experiments`.`article_doi` AS `article_doi`,
+    `experiments`.`article_doi` AS `doi`,
     `experiments`.`data_doi` AS `data_doi`,
     `experiments`.`path` AS `path`,
     `experiments`.`section` AS `section`
@@ -83,7 +84,7 @@ DROP VIEW IF EXISTS `experiments_OP`;
 CREATE VIEW `experiments_OP` AS
  SELECT `experiments`.`id` AS `id`,
 `experiments`.`article_doi` AS `article_doi`,
-    `experiments`.`data_doi` AS `data_doi`,
+  `experiments`.`article_doi` AS `doi`,
     `experiments`.`path` AS `path`,
     `experiments`.`section` AS `section`
    FROM `experiments`
@@ -189,18 +190,7 @@ CREATE TABLE `forcefields` (
 DROP TABLE IF EXISTS `heteromolecules`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `heteromolecules` (
-  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `molecule` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `forcefield_id` bigint unsigned NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `mapping` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `forcefield_id` (`forcefield_id`),
-  CONSTRAINT `heteromolecules_ibfk_1` FOREIGN KEY (`forcefield_id`) REFERENCES `forcefields` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 
@@ -431,17 +421,7 @@ CREATE TABLE `ranking_global` (
 DROP TABLE IF EXISTS `ranking_heteromolecules`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ranking_heteromolecules` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `trajectory_id` bigint NOT NULL,
-  `molecule_id` bigint NOT NULL,
-  `ranking_total` int NOT NULL,
-  `quality_total` float NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `trajectory_id` (`trajectory_id`),
-  KEY `molecule_id` (`molecule_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
-/*!40101 SET character_set_client = @saved_cs_client */;
+
 
 --
 -- Table structure for table `ranking_lipids`
@@ -495,7 +475,7 @@ CREATE TABLE `trajectories` (
   `timeleftout` double NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `water_resname` varchar(8) NOT NULL,
+  `water_resname` varchar(8) NOT NULL DEFAULT 'IMPLICIT',
   PRIMARY KEY (`id`),
   KEY `forcefield_id` (`forcefield_id`),
   KEY `membrane_id` (`membrane_id`),
@@ -534,23 +514,7 @@ CREATE TABLE `trajectories_analysis` (
 -- Table structure for table `trajectories_analysis_heteromolecules`
 --
 
-DROP TABLE IF EXISTS `trajectories_analysis_heteromolecules`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `trajectories_analysis_heteromolecules` (
-  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `trajectory_id` bigint unsigned NOT NULL,
-  `molecule_id` bigint unsigned NOT NULL COMMENT 'd',
-  `quality_total` double NOT NULL,
-  `quality_hg` double NOT NULL,
-  `quality_tails` double NOT NULL,
-  `order_parameters_file` varchar(255) NOT NULL,
-  `order_parameters_quality` varchar(255) NOT NULL,
-  `order_parameters_experiment` varchar(255) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `trajectory_id` (`trajectory_id`),
-  CONSTRAINT `trajectories_analysis_heteromolecules_ibfk_1` FOREIGN KEY (`trajectory_id`) REFERENCES `trajectories` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -631,7 +595,7 @@ CREATE TABLE `trajectories_experiments_FF` (
   PRIMARY KEY (`id`),
   KEY `trajectory_id` (`trajectory_id`),
   KEY `experiment_id` (`experiment_id`),
-  CONSTRAINT `experiment_id` FOREIGN KEY (`experiment_id`) REFERENCES `experiments_FF` (`id`),
+  CONSTRAINT `experiment_id` FOREIGN KEY (`experiment_id`) REFERENCES `experiments` (`id`),
   CONSTRAINT `trajectory_id` FOREIGN KEY (`trajectory_id`) REFERENCES `trajectories` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -654,7 +618,7 @@ CREATE TABLE `trajectories_experiments_OP` (
   KEY `experiment_id` (`experiment_id`),
   CONSTRAINT `trajectories_experiments_OP_ibfk_1` FOREIGN KEY (`trajectory_id`) REFERENCES `trajectories` (`id`),
   CONSTRAINT `trajectories_experiments_OP_ibfk_2` FOREIGN KEY (`lipid_id`) REFERENCES `lipids` (`id`),
-  CONSTRAINT `trajectories_experiments_OP_ibfk_3` FOREIGN KEY (`experiment_id`) REFERENCES `experiments_OP` (`id`)
+  CONSTRAINT `trajectories_experiments_OP_ibfk_3` FOREIGN KEY (`experiment_id`) REFERENCES `experiments` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -665,21 +629,7 @@ CREATE TABLE `trajectories_experiments_OP` (
 DROP TABLE IF EXISTS `trajectories_heteromolecules`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `trajectories_heteromolecules` (
-  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `trajectory_id` bigint unsigned NOT NULL,
-  `molecule_id` bigint unsigned NOT NULL,
-  `molecule_name` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
-  `leaflet_1` int NOT NULL,
-  `leaflet_2` int NOT NULL,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `analysis_trajectory_id_foreign` (`trajectory_id`),
-  KEY `Molecule_ID` (`molecule_id`) USING BTREE,
-  CONSTRAINT `trajectories_heteromolecules_ibfk_1` FOREIGN KEY (`trajectory_id`) REFERENCES `trajectories` (`id`),
-  CONSTRAINT `trajectories_heteromolecules_ibfk_2` FOREIGN KEY (`molecule_id`) REFERENCES `heteromolecules` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --

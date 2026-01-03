@@ -11,13 +11,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Pagination\CursorPaginator;
+
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 
 use Maatwebsite\Excel\Facades\Excel;
 
-use App\Http\Controllers\Session;
+
 
 class NewAdvancedSearchController extends Controller
 {
@@ -44,8 +44,6 @@ class NewAdvancedSearchController extends Controller
     $Selects = "`lipids`.molecule as lipid_name,
     `forcefields`.name as ff_name,
 
-    `heteromolecules`.molecule as hm_short_name,
-    `heteromolecules`.name as hm_name,
 
     `ions`.molecule as ion_short_name,
     `trajectories_ions`.number as number_ions,
@@ -54,7 +52,6 @@ class NewAdvancedSearchController extends Controller
     `trajectories_lipids`.leaflet_1,`trajectories_lipids`.leaflet_2,
 
     `ranking_global`.quality_total,
-    `ranking_heteromolecules`.ranking_total,
     `ranking_lipids`.ranking_total,
 
     (SELECT
@@ -71,26 +68,19 @@ class NewAdvancedSearchController extends Controller
         WHERE
             trajectories_experiments_FF.trajectory_id = trajectories.id)
     AS experimentdatacountFF,
+    `trajectories`.temperature as temperature
+    ";
 
-    `trajectories`.temperature as temperature,
-
-    `trajectories_heteromolecules`.molecule_name, `trajectories_heteromolecules`.leaflet_1 as hm_leaflet1, `trajectories_heteromolecules`.leaflet_2 as hm_leaflet2";
-    //`trajectories_ions`.bulk as ion_bulk";
-
-    //left join `trajectories_peptides` on `trajectories`.`id` = `trajectories_peptides`.`trajectory_id`
-    // left join `peptides` on `peptides`.`id` = `trajectories_peptides`.`peptide_id`
-    //left join `trajectories_water` on `trajectories`.`id` = `trajectories_water`.`trajectory_id`
-    //left join `water_models` on `water_models`.`id` = `trajectories_water`.`water_id`
-    //left join `trajectories_membranes` on `trajectories`.`id` = `trajectories_membranes`.`trajectory_id`
+    
     $Joins = " left join `trajectories_lipids` on `trajectories`.`id` = `trajectories_lipids`.`trajectory_id`
 
     left join `ranking_global` on `trajectories`.`id` = `ranking_global`.`trajectory_id`
-    left join `ranking_heteromolecules` on `trajectories`.`id` = `ranking_heteromolecules`.`trajectory_id`
+    
     left join `ranking_lipids` on `trajectories`.`id` = `ranking_lipids`.`trajectory_id`
 
 
     left join `trajectories_ions` on `trajectories`.`id` = `trajectories_ions`.`trajectory_id`
-    left join `trajectories_heteromolecules` on `trajectories`.`id` = `trajectories_heteromolecules`.`trajectory_id`
+ 
     left join `trajectories_membranes` on `trajectories`.`id` = `trajectories_membranes`.`trajectory_id`
     left join `trajectories_analysis` on `trajectories`.`id` = `trajectories_analysis`.`trajectory_id`
 
@@ -98,7 +88,7 @@ class NewAdvancedSearchController extends Controller
     left join `lipids` on `lipids`.`id` = `trajectories_lipids`.`lipid_id`
 
     left join `ions` on `ions`.`id` = `trajectories_ions`.`ion_id`
-    left join `heteromolecules` on `heteromolecules`.`id` = `trajectories_heteromolecules`.`molecule_id`
+ 
 
      left join `membranes` on `membranes`.`id` = `trajectories_membranes`.`membrane_id` ";
 
@@ -601,9 +591,6 @@ class NewAdvancedSearchController extends Controller
               //'peptides.bulk' => null,
               'ions.short_name' => $value2->ion_short_name,
               //'ions.bulk' => null,
-              'heteromolecules.short_name' => $value2->hm_short_name,
-              'heteromolecules.leaflet_1' => $value2->hm_leaflet1,
-              'heteromolecules.leaflet_2' => $value2->hm_leaflet2,
               //'heteromolecules.bulk' => null,
               //'water_models.short_name' => $value2->wm_short_name,
               //'membranes.name' => $value2->mem_name,
@@ -891,7 +878,7 @@ dd($quries);
         count($trayectoria['peptidos']),
         count($trayectoria['lipidos']),
         count($trayectoria['iones']),
-        count($trayectoria['moleculas']),
+        //count($trayectoria['moleculas']),
         count($trayectoria['modelos_acuaticos']),
         count($trayectoria['membranas']),
       );
@@ -924,9 +911,9 @@ dd($quries);
           //'peptides.bulk' => null,
           'ions.short_name' => null,
           //'ions.bulk' => null,
-          'heteromolecules.short_name' => null,
-          'heteromolecules.leaflet_1' => null,
-          'heteromolecules.leaflet_2' => null,
+          //'heteromolecules.short_name' => null,
+          //'heteromolecules.leaflet_1' => null,
+          //'heteromolecules.leaflet_2' => null,
           //'heteromolecules.bulk' => null,
           //'water_models.short_name' => null,
           'membranes.name' => null,
@@ -949,12 +936,7 @@ dd($quries);
           $trayectoriaTratada['ions.short_name'] = $trayectoria['iones'][$i]['short_name'];
           //      $trayectoriaTratada['ions.bulk'] = $trayectoria['iones'][$i]['bulk'];
         }
-        if (!empty($trayectoria['moleculas'][$i])) {
-          $trayectoriaTratada['heteromolecules.short_name'] = $trayectoria['moleculas'][$i]['short_name'];
-          $trayectoriaTratada['heteromolecules.leaflet_1'] = $trayectoria['moleculas'][$i]['leaflet_1'];
-          $trayectoriaTratada['heteromolecules.leaflet_2'] = $trayectoria['moleculas'][$i]['leaflet_2'];
-          //  $trayectoriaTratada['heteromolecules.bulk'] = $trayectoria['moleculas'][$i]['bulk'];
-        }
+        
 
         /*if (!empty($trayectoria['modelos_acuaticos'][$i])) {
           $trayectoriaTratada['water_models.short_name'] = $trayectoria['modelos_acuaticos'][$i]['short_name'];

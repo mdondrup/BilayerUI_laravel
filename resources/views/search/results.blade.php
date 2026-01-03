@@ -66,19 +66,7 @@ foreach ($listaIdsSesson as $key => $value) {
                                         </span>
                                     </div>
                                 @endforeach
-                                @if (count($moleculas) > 0)
-                                    @foreach ($moleculas as $molecula)
-                                        <div class="col-2 p-1">
-                                            <span class="badge badge-secondary">@lang('Lípido') </span>
-                                            <span>
-                                                <a href="{{ route('new_advanced_search.results') . '?moleculas_operador[1]=or&moleculas[1]=' . $molecula->molecule }}"
-                                                    class="">
-                                                    {!! resaltar_texto($molecula->molecule, $texto) !!}</a>
-                                            </span>
-                                        </div>
-                                    @endforeach
-                                @endif
-
+                               
 
                             </div>
                         @endif
