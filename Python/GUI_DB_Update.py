@@ -2,7 +2,13 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov 16 14:27:05 2021
-Modified on June-September 2025
+Modified June 2025 - January 2026
+- Adapted to new database structure
+- Added loading of lipid, experiment metadata and cross-references
+
+Path: Python/GUI_DB_Update.py
+Description: Script to update the NMRLipids database with new entries
+
 
 @authors: Fabs, Michael Dondrup
 
@@ -50,7 +56,7 @@ def genRpath(apath):
 
 
 # Program description
-parser = argparse.ArgumentParser(description='NMRLipids Update v1.0')
+parser = argparse.ArgumentParser(description='NMRLipids Update v2.0')
 
 # Ubication of data
 parser.add_argument(
@@ -107,7 +113,7 @@ def SQL_Select(Table: str, Values: list, Condition: dict = {}) -> str:
         comps = []
         for k, v in Condition.items():
             if isinstance(v, numbers.Number) and v != np.ceil(v):
-                comp = f'ABS( `{k}` - %f) < 1E-5'
+                comp = f'ABS( `{k}` - %s) < 1E-5'
             else:
                 comp = f'`{k}` = %s'
             comps.append(comp)
@@ -115,7 +121,7 @@ def SQL_Select(Table: str, Values: list, Condition: dict = {}) -> str:
     return Query
 
 
-def SQL_Create(Table: str, Values: dict, Condition: dict = {}) -> str:
+def SQL_Create(Table: str, Values: dict) -> str:
     '''
     Generate a SQL query to insert a new entry in a table.
 
@@ -125,8 +131,7 @@ def SQL_Create(Table: str, Values: dict, Condition: dict = {}) -> str:
         Name of the table.
     Values : dict
         List of values to insert.
-    Condition : dict, optional
-        Condition(s) for the insertion.
+    
 
     Returns
     -------
@@ -134,21 +139,15 @@ def SQL_Create(Table: str, Values: dict, Condition: dict = {}) -> str:
         The SQL query:
         INSERT INTO Table ( Values.keys()[0], ..., Values.keys()[-1] ) VALUES
                     ( Values.values()[0], ..., Values.values()[-1] )
-               WHEN Condition.keys()[0]=Condition.value()[0] AND ...
-                    Condition.keys()[-1]=Condition.value()[-1]
+           
     '''
     Query = (
         f' INSERT INTO `{Table}` (' +
         ", ".join(map(lambda x: f'`{x}`', Values.keys())) +
         ") VALUES (" + (','.join(["%s"]*len(Values)))  + ')'
     )
-    # print(Query)
-    # Add a condition to the search
-    if Condition:
-        Query += (
-            'WHERE ' +
-            " AND ".join(map(lambda x: f'`{x[0]}`="{x[1]}"', Condition.items()))
-        )
+    print(Query)
+    
 
     return Query
 
@@ -172,7 +171,7 @@ def SQL_Update(Table: str, Values: dict, Condition: dict = {}) -> str:
         The SQL query:
         UPDATE Table SET Values.keys()[0] = Values.values()[0], ...,
                          Values.keys()[-1] = Values.values()[-1]
-          WHEN Condition.keys()[0]=Condition.value()[0] AND ...
+          WHERE Condition.keys()[0]=Condition.value()[0] AND ...
                Condition.keys()[-1]=Condition.value()[-1]
     '''
     Query = (
@@ -218,6 +217,7 @@ def CheckEntry(Table: str, LipidInformation: dict = {}) -> int:
         if args.debug: print(f"Executing query to check entry in {Table} with conditions {values}")
         # Use mogrify to get the composed query string as bytes
         query = SQL_Select(Table, ["id"], LipidInformation)
+        if args.debug: print("Preparing Query: {}".format(query))
         composed_query_str = cursor.mogrify(query, values)
         #print("Composed Query String (Before Execution):")
         #print(composed_query_str)
@@ -372,6 +372,7 @@ def DBEntry(Table: str, LipidInformation: dict, Minimal: dict = {}) -> tuple:
     Manages entries in the DB. If the Minimal LipidInformation is not found in an
     existing entry, a new one is created; else, the matching entry is updated
     when a discrepancy between the minimal and the total LipidInformation appears.
+    The ID of the created/updated entry is returned. The table must have an 'id' column.
 
     Parameters
     ----------
@@ -380,7 +381,7 @@ def DBEntry(Table: str, LipidInformation: dict, Minimal: dict = {}) -> tuple:
     LipidInformation : dict
         Total LipidInfomation of the entry.
     Minimal : dict, optional
-        Minimal LipidInformation of the entry.
+        Minimal LipidInformation that uniquely identifies the entry (except the ID).
 
     Returns
     -------
@@ -495,29 +496,86 @@ def load_lipid_metadata(metadata_path, database):
         }
         LinkEntries('cross_references', crossref_data)
 
-# The list of molecules in the membrane whose structure is not a phospholipid
-# Removed this by request of Alex, this is not needed anymore and was wrong
+
+
+def load_experiment_composition(Exp_ID, README) -> None:
+    '''
+    Load membrane and solution composition for an experiment.
+    
+    Parameters
+    ----------
+    Exp_ID : int
+        The experiment ID to link compositions to.
+    README : dict
+        The README metadata containing composition information.
+    Returns
+    -------
+    None
+    '''
+    # Load membrane composition
+    for lipid_name, lipid_data in README.get("MEMBRANE_COMPOSITION", README.get("MOLAR_FRACTIONS", {})).items():
+        lipid_id = DBEntry('lipids',{'molecule': lipid_name},{'molecule': lipid_name})
+        comp_data = {
+            'experiment_id': Exp_ID,
+            'lipid_id': lipid_id,
+            'mol_fraction': float(lipid_data),
+        }
+        DBEntry('experiments_membrane_composition', comp_data, comp_data)
+        if args.debug: print (" -- Linked lipid {} to experiment {}, {}".format(lipid_name, Exp_ID, lipid_data))
+    
+    # Load solution composition
+    for compound_name, compound_data in (README.get("SOLUTION_COMPOSITION", README.get("ION_CONCENTRATIONS", {})) or {}).items():
+        ion_comp_data = {
+            'experiment_id': Exp_ID,
+            'compound': compound_name,
+            'concentration': float(compound_data),
+        }
+        DBEntry('experiments_solution_composition', ion_comp_data, ion_comp_data)
+        if args.debug: print (" -- Linked ion {} to experiment {}, {}".format(compound_name, Exp_ID, compound_data))
+
+def load_experiment_properties(id, data) -> None:
+    '''
+    Load properties for an experiment.
+    
+    Parameters
+    ----------
+    id : int
+        The experiment ID to link properties to.
+    data : dict
+        The README metadata containing property information.
+    Returns
+    -------
+    None
+    '''
+    # Insert properties from README into the properties table
+    for prop, value in data.items():
+        if prop in ['ARTICLE_DOI', 'DATA_DOI', 'DOI', 'SECTION', 'MEMBRANE_COMPOSITION', 'MOLAR_FRACTIONS', 'SOLUTION_COMPOSITION', 'ION_CONCENTRATIONS']:   
+            continue  # Skip non-property fields
+        # Check if value is a complex type (list or dict)
+        value_store = value
+        if isinstance(value, (list, dict)):
+            value_store = json.dumps(value)  # Convert to JSON string
+        prop_data = {
+            'name': prop,
+            'description': '',
+            'value': value_store,
+            'unit': '',
+            'type': 'string' if isinstance(value, str) 
+                else 'integer' if isinstance(value, int) 
+                else 'float' if isinstance(value, float) 
+                else 'dict' if isinstance(value, dict)
+                else 'list' if isinstance(value, list) 
+                else 'string'
+        }
+        # Create new property entry for each property
+        prop_id = CreateEntry('experiment_property', prop_data)
+        # Link experiment and property
+        if args.debug: print ("Linking property {}:{} to experiment ID {}".format(prop_id,prop, id))
+        LinkEntries('experiments_properties_linker', {'experiment_id': id, 'property_id': prop_id})
+        
+# List to store failed entries
 
 FAILS = []
-
-TABLE_LIST = ["experiments_OP",
-              "experiments_FF",
-              "forcefields",
-              "lipids",
-              "ions",
-              "membranes",
-              "trajectories",
-              "trajectories_lipids",
-              "trajectories_ions",
-              "trajectories_membranes",
-              "trajectories_analysis",
-              "trajectories_analysis_lipids",
-              "trajectories_analysis_ions",
-              "ranking_global",
-              "ranking_lipids",
-              "trajectories_experiments_OP",
-              "trajectories_experiments_FF"
-              ]
 
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # MAIN PROGRAM
@@ -541,8 +599,7 @@ if __name__ == '__main__':
                     load_lipid_metadata(metadata_path, database)
 
 
-# -- TABLE `experiments_OP`
-
+# -- TABLE `experiments`
 
         # Find files with order parameters experiments
         EXP_OP = []
@@ -564,15 +621,20 @@ if __name__ == '__main__':
             for file in os.listdir(osp.join(PATH_EXPERIMENTS_OP, expOP)):
                 if file.endswith(".json"):
 
-                    ExpInfo = {"article_doi": README.get("ARTICLE_DOI", README.get("DOI", ""))  ,
-                            "data_doi": README.get("DATA_DOI", ""),
-                            "section" : README.get("SECTION", section_from_path),
-                                "type" : "OP",
-                                "path": genRpath(osp.join(PATH_EXPERIMENTS_OP, expOP, file))}
+                    ExpInfo = {
+                        "article_doi": README.get("ARTICLE_DOI", README.get("DOI", ""))  ,
+                        "data_doi": README.get("DATA_DOI", ""),
+                        "section" : README.get("SECTION", section_from_path),
+                        "type" : "OP",
+                        "path": genRpath(osp.join(PATH_EXPERIMENTS_OP, expOP, file))}
 
                     # Entry in the DB with the LipidInfo of the experiment
                     Exp_ID = DBEntry('experiments', ExpInfo, ExpInfo)
-
+                    if args.debug: print ("Inserted experiment {} of type OP".format(Exp_ID))
+                    # Now add the membrane composition if available
+                    load_experiment_composition(Exp_ID, README)
+                    load_experiment_properties(Exp_ID, README)
+                    
 
     # -- TABLE `experiments_FF`
 
@@ -602,6 +664,14 @@ if __name__ == '__main__':
                                 "path": genRpath(osp.join(PATH_EXPERIMENTS_FF, expFF, file))}
                     # Entry in the DB with the LipidInfo of the experiment
                     Exp_ID = DBEntry('experiments', ExpInfo, ExpInfo)
+                    if args.debug: print ("Inserted experiment {} of type FF".format(Exp_ID))
+                    # Now add the membrane composition if available
+                    load_experiment_composition(Exp_ID, README)
+                    load_experiment_properties(Exp_ID, README)
+
+
+                    
+                    
   
     # -- TABLE `forcefields`, `lipids_forcefields` and others
     

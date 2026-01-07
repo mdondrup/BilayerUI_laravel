@@ -101,8 +101,8 @@ CREATE TABLE `experiments_properties_linker` (
   `experiment_id` bigint unsigned NOT NULL,
   `property_id` bigint unsigned NOT NULL,
   PRIMARY KEY (`experiment_id`,`property_id`),
-  CONSTRAINT `experiments_FF_properties_ibfk_1` FOREIGN KEY (`experiment_id`) REFERENCES `experiments` (`id`),
-  CONSTRAINT `experiments_FF_properties_ibfk_2` FOREIGN KEY (`property_id`) REFERENCES `experiment_property` (`id`)
+  CONSTRAINT `experiments_properties_ibfk_1` FOREIGN KEY (`experiment_id`) REFERENCES `experiments` (`id`),
+  CONSTRAINT `experiments_properties_ibfk_2` FOREIGN KEY (`property_id`) REFERENCES `experiment_property` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -120,7 +120,8 @@ CREATE TABLE `experiment_property` (
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `unit` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `type` ENUM('string', 'integer', 'numeric', 'float') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `parent_id` bigint unsigned DEFAULT NULL,
+  `type` ENUM('string', 'integer', 'numeric', 'float', 'dict', 'array') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -135,29 +136,31 @@ DROP TABLE IF EXISTS `experiments_membrane_composition`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `experiments_membrane_composition` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `experiment_id` bigint unsigned NOT NULL,
   `lipid_id` bigint unsigned NOT NULL,
   `mol_fraction` float NOT NULL,
-  PRIMARY KEY (`experiment_id`,`lipid_id`),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY (`experiment_id`,`lipid_id`),
   CONSTRAINT `experiments_membrane_composition_ibfk_1` FOREIGN KEY (`experiment_id`) REFERENCES `experiments` (`id`),
   CONSTRAINT `experiments_membrane_composition_ibfk_2` FOREIGN KEY (`lipid_id`) REFERENCES `lipids` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
-
 --
 -- Table structure for table `solution_composition`
 --
-DROP TABLE IF EXISTS `experiment_solution_composition`; 
+DROP TABLE IF EXISTS `experiments_solution_composition`; 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `experiment_solution_composition` (
+CREATE TABLE `experiments_solution_composition` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `experiment_id` bigint unsigned NOT NULL,
-  `heteromolecule_id` bigint unsigned NOT NULL,
+  `compound` varchar(255) NOT NULL,
   `concentration` float NOT NULL,
-  PRIMARY KEY (`experiment_id`,`heteromolecule_id`),
-  CONSTRAINT `solution_composition_ibfk_1` FOREIGN KEY (`experiment_id`) REFERENCES `experiments` (`id`),
-  CONSTRAINT `solution_composition_ibfk_2` FOREIGN KEY (`heteromolecule_id`) REFERENCES `heteromolecule` (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY (`experiment_id`,`compound`),
+  CONSTRAINT `solution_composition_ibfk_1` FOREIGN KEY (`experiment_id`) REFERENCES `experiments` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
@@ -182,18 +185,6 @@ CREATE TABLE `forcefields` (
   UNIQUE KEY `forcefields_name_unique` (`name`,`date`,`source`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `heteromolecules`
---
-
-DROP TABLE IF EXISTS `heteromolecules`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-
-/*!40101 SET character_set_client = @saved_cs_client */;
-
-
 
 --
 -- Table structure for table `ions`
@@ -414,14 +405,6 @@ CREATE TABLE `ranking_global` (
 ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Table structure for table `ranking_heteromolecules`
---
-
-DROP TABLE IF EXISTS `ranking_heteromolecules`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-
 
 --
 -- Table structure for table `ranking_lipids`
@@ -510,12 +493,6 @@ CREATE TABLE `trajectories_analysis` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Table structure for table `trajectories_analysis_heteromolecules`
---
-
-
-/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `trajectories_analysis_ions`
@@ -622,15 +599,7 @@ CREATE TABLE `trajectories_experiments_OP` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Table structure for table `trajectories_heteromolecules`
---
 
-DROP TABLE IF EXISTS `trajectories_heteromolecules`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-
-/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `trajectories_ions`

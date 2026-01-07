@@ -2,12 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\DB;
 
 class ExperimentController extends Controller
 {
+
+    public function list()
+    {
+        // Fetch all experiments
+        $experiments = DB::table('experiments')
+            ->select('id', 'article_doi', 'data_doi', 'section', 'type', 'path')
+            ->paginate(10);
+
+        return View::make('experiment', [
+            'experiments_list' => $experiments,
+        ]);
+    }
 
 
     public function show($type, $doi, $section)
@@ -29,6 +40,12 @@ class ExperimentController extends Controller
             ->where('efl.experiment_id', $experiment->id)
             ->select('ep.name', 'ep.value', 'ep.unit', 'ep.type', 'ep.description')
             ->get();
+        // convert properties with type 'array' or 'dict' from JSON strings to PHP arrays
+        foreach ($properties as $prop) {
+            if ($prop->type === 'array' || $prop->type === 'dict') {
+                $prop->value = json_decode($prop->value, true);
+            }
+        }
         // Fetch membrane composition property if exists
         $membraneComposition = DB::table('experiments_membrane_composition as emc')
             ->join('lipids as l', 'emc.lipid_id', '=', 'l.id')
@@ -36,10 +53,9 @@ class ExperimentController extends Controller
             ->select('l.id','l.name', 'emc.mol_fraction',)
             ->get();
         // Fetch solution composition property if exists
-        $solutionComposition = DB::table('experiment_solution_composition as esc')
-            ->join('heteromolecules as h', 'esc.heteromolecule_id', '=', 'h.id')
+        $solutionComposition = DB::table('experiments_solution_composition as esc')
             ->where('esc.experiment_id', $experiment->id)
-            ->select('h.id','h.name', 'esc.concentration',)
+            ->select('esc.compound', 'esc.concentration',)
             ->get();    
 
         return View::make('experiment', [
