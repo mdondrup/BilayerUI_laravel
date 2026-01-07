@@ -79,14 +79,17 @@ Route::get('/search/basic', 'App\Http\Controllers\SearchController@basic')->name
 Route::get('/sitemap.xml', [SitemapXmlController::class, 'sitemap']);
 
 // Routes for advanced search autocomplete fields
-Route::get('listLipidos', function (Illuminate\Http\Request  $request) {
+Route::get('lipids', function (Illuminate\Http\Request  $request) {
     $term = $request->term ?: ''; //  <- esto depende del js que lo manda asi
-    $tags = App\Lipido::where('short_name', 'like', $term . '%')->lists('short_name', 'id');
+    $tags = App\Lipido::where('molecule', 'LIKE', '%' . $term . '%')
+        ->orderBy('molecule', 'asc')
+        ->pluck('molecule', 'id', 'name', 'mapping')
+        ->toArray();
     $valid_tags = [];
     foreach ($tags as $id => $tag) {
-        $valid_tags[] = ['id' => $id, 'text' => $tag];
+        $valid_tags[] = ['id' => $id, 'molecule' => $tag];
     }
-    return \Response::json($valid_tags);
+    return $valid_tags;
 });
 
 // Route::get('/peptido/{peptido_id}', 'PeptidosController@show')->name('peptidos.show');
@@ -107,6 +110,9 @@ Route::get('/lipid/{lipid_id}', [LipidController::class, 'show']
 Route::get('/experiment/{type}/{doi}/{section}', [ExperimentController::class, 'show'])
     ->where(['doi' => '.+', 'section' => '[0-9]+', 'type' => 'FF|OP'])
     ->name('experiments.show');
+
+Route::get('/experiments', [ExperimentController::class, 'list'])
+    ->name('experiments.list');    
 
 // ion
 // agua
