@@ -97,6 +97,7 @@
                                     <th scope="col">Data DOI</th>
                                     <th scope="col">Type</th>
                                     <th scope="col">Section</th>
+                                    <th scope="col">Number of lipids</th>
                                     <th scope="col">Actions</th>
                                 </tr>
                             </thead>
@@ -109,6 +110,7 @@
                                     <td>{{ $experiment->type }}</td>
                                     
                                     <td>{{ $experiment->section }}</td>
+                                    <td>{{ $experiment->lipid_count }}</td>
                                     <td><a href="{{ route('experiments.show', ['type' => $experiment->type, 'doi' => $experiment->article_doi, 'section' => $experiment->section]) }}" class="btn btn-primary btn-sm">View</a></td>
                                 </tr>
                                 @endforeach
@@ -127,6 +129,9 @@
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="properties-tab" data-bs-toggle="tab"     data-bs-target="#properties" type="button" role="tab">Properties</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button" role="tab">Analysis (coming soon)</button>
                         </li>
                     </ul>
                     <!-- Tab Contents -->
@@ -279,6 +284,29 @@
                                     @endforeach
                                 </tbody>
                             </table>
+                        </div>
+                        <!-- Analysis Tab -->
+                        <div class="tab-pane fade" id="analysis" role="tabpanel" aria-labelledby="analysis-tab">
+                            <br/>
+                            <p class="text-white">Analysis features are coming soon. Stay tuned!</p>
+                            <h5 class="text-white">Membrane Composition</h5>
+                            <table class="table table-bordered table-striped table-sm table-dark">
+                                                    <thead>
+                                                        <tr>
+                                                            <th scope="col">Lipid</th>
+                                                            <th scope="col">PATH</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                             @foreach ( $entity['membrane_composition'] as $component )
+                                                    <tr>
+                                                        <td><a href="/lipid/{{ $component->id }}"> {{ $component->molecule }}</a></td>
+                                                        <td>{{ $entity['path'] }}</td>
+                                                    </tr>
+                                                @endforeach
+                                                    </tbody>
+                            </table>
+
                         </div>
                     </div>
                     @endif

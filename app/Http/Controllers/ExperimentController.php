@@ -12,7 +12,10 @@ class ExperimentController extends Controller
     {
         // Fetch all experiments
         $experiments = DB::table('experiments')
-            ->select('id', 'article_doi', 'data_doi', 'section', 'type', 'path')
+            ->select('experiments.id', 'article_doi', 'data_doi', 'section', 'type', 'path')
+            ->leftJoin('experiments_membrane_composition as emc', 'experiments.id', '=', 'emc.experiment_id')
+            ->groupBy('experiments.id')
+            ->selectRaw('COUNT(emc.lipid_id) as lipid_count')
             ->paginate(10);
 
         return View::make('experiment', [
@@ -50,7 +53,7 @@ class ExperimentController extends Controller
         $membraneComposition = DB::table('experiments_membrane_composition as emc')
             ->join('lipids as l', 'emc.lipid_id', '=', 'l.id')
             ->where('emc.experiment_id', $experiment->id)
-            ->select('l.id','l.name', 'emc.mol_fraction',)
+            ->select('l.id','l.name','l.molecule', 'emc.mol_fraction')
             ->get();
         // Fetch solution composition property if exists
         $solutionComposition = DB::table('experiments_solution_composition as esc')
