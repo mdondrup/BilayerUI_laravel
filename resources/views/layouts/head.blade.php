@@ -61,12 +61,11 @@
 
 
     <!-- nouislider -->
-    <!-- link href="{{ asset('storage/js/nouislider/nouislider.min.css') }}" rel="stylesheet" />
+    <link href="{{ asset('storage/js/nouislider/nouislider.min.css') }}" rel="stylesheet" />
     <script type="text/javascript" src="{{ asset('storage/js/nouislider/nouislider.min.js') }}"></script>
-    <script type="text/javascript" src="{{ asset('storage/js/nouislider/wNumb.min.js') }}"></script -->
+    <script type="text/javascript" src="{{ asset('storage/js/nouislider/wNumb.min.js') }}"></script>
 
     <!-- JSMOL -->
-    <!-- script type="text/javascript" src="{{ asset('storage/js/jsmol/JSmol.min.js') }}"></script> {{--  Tiene que estar antes el jsmol que jquery--}} -->
 
 
    <!-- script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script -->
@@ -80,9 +79,8 @@
    
      <!-- Chart -->
      <!--<script type="text/javascript"  src="https://cdn.jsdelivr.net/npm/chart.js"></script>-->
-     <script type="text/javascript"  src="https://unpkg.com/chart.js@3.8.2"></script>
+     <script type="text/javascript"  src="https://unpkg.com/chart.js@4.0"></script>
 
-     <script type="text/javascript"  src="https://unpkg.com/chartjs-chart-error-bars@3"></script>
 <style>
     /* Dark pill tabs */
     .nav-pills .nav-link {

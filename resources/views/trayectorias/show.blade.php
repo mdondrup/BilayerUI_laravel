@@ -658,7 +658,6 @@ use Illuminate\Support\Collection;
                                 <a href="#homeAnalysis" class="nav-link" aria-controls="homeAnalysis" role="tab"
                                     data-toggle="tab">Analysis/Experiment</a>
                             </li>
-                            <!--<li role="presentation" class="nav-item"><a href="#homeExperiment" class="nav-link" aria-controls="homeExperiment" role="tab"data-toggle="tab">Experiment</a></li>-->
                         </ul>
 
 
@@ -727,9 +726,7 @@ use Illuminate\Support\Collection;
                                                             </span><br>
                                                             <p>
                                                                 <?php
-                                                                //echo "<br><a class=\"bi bi-cloud-download\" href=\"".route('download', ['id' => $trayectoria->id ,'file' => 'run.mdp'])."\" class=\"card-link\" >&nbsp;&nbsp;Download MDP File. </a></br>";
-                                                                //echo "<a class=\"bi bi-cloud-download\" href=\"".route('download', ['id' => $trayectoria->id ,'file' => 'system.top'])."\" class=\"card-link\" >&nbsp;&nbsp;Download TOP File. </a></br>";
-                                                                //echo "<a class=\"bi bi-cloud-download\" href=\"" . route('download', ['id' => $trayectoria->id, 'file' => 'first_trj.pdb']) . "\" class=\"card-link\" >&nbsp;&nbsp;Download PDB File. </a></br>";
+                                                               
                                                                 $cadPath = asset('storage/simulations/' . $trayectoria->git_path);
                                                                 echo "<a class=\"bi bi-cloud-download\" href=\"" . $cadPath . "/conf.pdb.gz\" class=\"card-link\" >&nbsp;Download PDB File. </a></br>";
 
@@ -760,16 +757,9 @@ use Illuminate\Support\Collection;
                             <!-- homeMembrane -->
                             <div role="tabpanel" class="tab-pane m-1 bg-solapa card-datos" id="homeMembrane">
                                 <div class="card-body" style="height: 100%;">
-                                    <span class="d-flex justify-content-center jmol_zorder  bg-jmolAnalysis"
-                                        id=jmolViewLast_traj></span>
-                                    <!-- button id="btnWater" type="button" class="mt-2 btn btn-primary btn-sm "
-                                        onclick="scrWater()">Hide Water</button -->
+                                   
 
                                     <div class="row p-4">
-
-                                        <div class="col-xl-4 col-md-12 col-lg-6 bg-jmol">
-                                            <div class="d-flex justify-content-center" id=jmolViewMembrane></div>
-                                        </div>
 
                                         <div class="col-xl-8 col-md-12 col-lg-6 pt-4 pb-4 ">
                                             <div class="row">
@@ -800,7 +790,6 @@ use Illuminate\Support\Collection;
                                             <span>
                                                 <h3>Lipids</h3>
                                             </span></br>
-                                            <!--  <h4>{{ $trayectoria->membrana->lipid_names_l1 }} </h4>-->
                                         </div>
                                     </div>
 
@@ -821,7 +810,6 @@ use Illuminate\Support\Collection;
                                                 <div class=" ">
                                                     <h5 class=" ">{{ $lipido->molecule }}</h5>
 
-                                                    <!--<span> Ranking total </span>-->
 
                                                     <?php
 
@@ -874,32 +862,7 @@ use Illuminate\Support\Collection;
                                 <div class="card-body">
                                     @if (!is_null($trayectoria->analisis))
                                         <div class="row p-2">
-                                            <div class="col-sm-12 col-md-6 pb-4">
-
-
-
-
-                                            </div>
-
-
-                                            <div class="col-sm-12 col-md-6 ">
-
-                                                <?php
-                                                /*if(file_exists(public_path('storage'.$pathFilesAnalisis.'/number_of_contacts.png')))
-                       {
-                       echo '<h5 class=" ">';
-                       echo 'Number of contacts: ';
-                       echo '<div class="tooltip-2 bi bi-info-circle">
-                           <span class="tooltiptext">Number of contacts between the peptide and the lipids separated by lipid headgroups (HG) or lipid tails, averaged over the last microsecond
-.</span>
-                       </div>';
-                       echo '</h5>';
-                       echo '<a class="portfolio-box" href="'.$cadPath.'/number_of_contacts.png" title="Click to Zoom">';
-                       echo '<img class="img-fluid justify-content-center "  style="border-radius:20px; max-height:300px;" src="'.$cadPath.'/number_of_contacts.png" alt="..." />';
-                       echo '</a>';
-                     }*/
-                                                ?>
-                                            </div>
+                                          
 
 
                                         </div>
@@ -1167,132 +1130,14 @@ use Illuminate\Support\Collection;
     <?php
 
 
-    //echo $trayectoria->analisis->form_factor_experiment . '/FormFactor.json';
-
-    // die();
+   
 
     $cadPath = asset('storage/simulations/' . $trayectoria->git_path);
 
-    //echo($cadPath);
-    //die();
+   
 
     ?>
 
-    <!-- script type="text/javascript">
-        $(document).ready(function() {
-            var InfoBase = {
-                width: 300,
-                height: 300,
-                debug: false,
-                j2sPath: "{{ asset('storage/js/jsmol/j2s') }}", // Ruta al j2s, si no se indica no lo encuentra
-                color: "0xAAAAAA",
-                disableJ2SLoadMonitor: true,
-                disableInitialConsole: true,
-                addSelectionOptions: false,
-                serverURL: "{{ asset('storage/js/jsmol/php/jsmol.php') }}",
-                use: "HTML5",
-                deferApplet: false,
-                readyFunction: null,
-                script: "",
-
-            }
-
-            //InfoPeptide = Object.create(InfoBase);
-            InfoMembrane = Object.create(InfoBase);
-            //InfoLast_traj = Object.create(InfoBase);
-
-            InfoMembrane.width = 600;
-
-            //        InfoPeptide["script"]= "load async {{-- $cadPath.'/peptide.pdb' --}}";
-            InfoMembrane["script"] = "load async {{ $cadPath . '/conf.pdb.gz' }}";
-            //    InfoLast_traj["script"]= "load async {{-- $cadPath.'/last_trj.pdb' --}}";
-
-
-            //$("#jmolViewPeptide").html(Jmol.getAppletHtml("jmolApplet0",InfoPeptide))
-            $("#jmolViewMembrane").html(Jmol.getAppletHtml("jmolApplet1", InfoMembrane))
-            //$("#jmolViewLast_traj").html(Jmol.getAppletHtml("jmolApplet2",InfoLast_traj))//color amino;
-
-            Cadena = "<?php echo $CadSelectMem; ?> ";
-            //#FF9AA2','#C7CEEA','#FFB7B2','#B5EAD7','#FFDAC1','#E2F0CB'
-
-            //Jmol.script(jmolApplet0, "spin off; wireframe 15%;spacefill 100%;set zoomLarge off; select hydrophobic;color green; select polar;color yellow;select acidic;color red;select basic;color blue")
-            Jmol.script(jmolApplet1, "spin off; wireframe 15%;spacefill 100%;set zoomLarge off;" + Cadena)
-            //Jmol.script(jmolApplet2, "spin off; wireframe 15%;spacefill 100%;set zoomLarge off;select hydrophobic;color green; select polar;color yellow;select acidic;color red;select basic;color blue;"+Cadena)
-
-            // Select CHOL -- CHO ::: DOPC -- DOP En mayusculas
-            //select [CHO]; hide !selected;
-
-            //select WITHIN(ATOMNAME,"NH3,PO4,GL1,GL2,C1A,D2A,C3A,C4A,C1B,D2B,C3B,C4B"); color green
-
-
-            // CSS personalizado
-
-            /*var side = "bottom";
-            var h = 60;
-
-              var cssTx = '<style type="text/css">';
-                cssTx += '#jmolViewPeptide { leff:0; width:100%; ' + ( side=="bottom" ? "bottom:0;" : "top:0;" ) + ' height:' + h + '%;} ';
-                cssTx += '#jmolViewMembrane { leff:0; width:100%; ' + ( side=="bottom" ? "bottom:0;" : "top:0;" ) + ' height:' + h + '%;} ';
-                cssTx += '#jmolViewLast_traj { leff:0; width:100%; ' + ( side=="bottom" ? "bottom:0;" : "top:0;" ) + ' height:' + h + '%;} ';
-                cssTx += '#mainPane { left:0; width:100%; ' + ( side=="bottom" ? "top:0;" : "bottom:0;" ) + ' height:' + (100-h) + '%; } ';
-                cssTx += '</style>';
-                document.writeln(cssTx);
-            */
-            <!- ?php
-
-            // LOOP PARA LOS LIPIDOS
-
-            foreach ($trayectoria->lipidos as $lipido) {
-                echo 'var Info_' . $lipido->short_name . " = InfoBase;\n";
-
-                //echo "Info_".$lipido->short_name.".script = \"load async https://supepmem.com/storage/forcefields/".$lipido->forcefield_id."/".$lipido->short_name.".pdb\";\n";
-
-                echo 'Info_' . $lipido->short_name . ".width = 450;\n";
-                echo 'Info_' . $lipido->short_name . ".height = 250;\n";
-
-                echo "$(\"#jmolView_" . $lipido->short_name . "\").html(Jmol.getAppletHtml(\"jmolApplet" . $lipido->short_name . "\",Info_" . $lipido->short_name . "));\n";
-
-                //echo "Jmol.script(jmolApplet".$lipido->short_name.", \"spacefill 120%; wireframe 0.15;','ball&stick',true\");\n";
-                echo 'Jmol.script(jmolApplet' . $lipido->short_name . ", \"spin off; wireframe 15%;spacefill 200%;select C\");\n";
-            }
-
-            ? ->
-
-        });
-
-
-        function ShowLipid(id, name) {
-            $('.details' + name).
-            slideToggle(function() {
-                $('#more' + name).
-                html(
-                    $('.details' + name).is(':visible') ? '&nbsp;&nbsp;Hide ' + name + ' lipid' :
-                    '&nbsp;&nbsp;See ' + name + ' lipid');
-            });
-            //console.log("jmolApplet"+name);
-            //console.log('load async "https://supepmem.com/storage/forcefields/'+id+'/'+name+'.pdb"');
-
-            //$("#jmolView_"+name).html(Jmol.getAppletHtml('jmolApplet','Info_'+name));
-
-            Jmol.script(this['jmolApplet' + name], 'load async "https://supepmem.com/storage/forcefields/' + id + '/' +
-                name + '.pdb";spin on; wireframe 15%;spacefill 200%;select C;');
-
-        };
-
-        function scrWater() {
-            var x = document.getElementById("btnWater");
-            if (x.innerHTML === "Show water") {
-                x.innerHTML = "Hide water";
-                console.log("hide water");
-                Jmol.script(jmolApplet1, 'display all;');
-            } else {
-                x.innerHTML = "Show water";
-                console.log("Show water");
-                Jmol.script(jmolApplet1, 'select water,sol; hide selected;');
-                //Jmol.script(jmolApplet1, 'select water; hide selected;');
-            }
-        };
-    </script -->
 
     <script>
 
@@ -1307,6 +1152,11 @@ use Illuminate\Support\Collection;
           return arrayUnique(combinedArray);
         }
 
+        // This function draws charts using Chart.js
+        // canvasId,names,data,data2,step,chartType,title,labelX,labelY,borde,radio,gridOn,responsive,AutoSkiping,showLeyend,xtype
+        // Example call:    
+        // DrawChart('myChart1', ['A','B','C'], [10,20,30], '', 1, 'bar', 'Sample Chart', 'Categories', 'Values', 1, 5, true, true, true, true, '');
+        
         function DrawChart(canvasId, names, data,names2, data2, step, chartType, title, labelX, labelY, borde, radio, gridOn,
             responsive, AutoSkiping, showLeyend, xtype) {
 
@@ -1389,9 +1239,7 @@ use Illuminate\Support\Collection;
                 }
 
               }
-              //console.log(labelFusion);
-              //console.log(data1Fusion);
-              //console.log(data2Fusion);
+             // Simulated and Experimental Data fusion
 
               dataTop = {
                   labels: labelFusion,
@@ -1618,7 +1466,7 @@ use Illuminate\Support\Collection;
           }
         }
         indpos=indpos+1;
-console.log(label2);
+        console.log(label2);
         var d = {
             label: label2[indpos-1],
             backgroundColor: colorList[indpos],
