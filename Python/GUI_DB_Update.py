@@ -81,9 +81,111 @@ args = parser.parse_args()
 # SQL Queries
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+# Functions to generate SQL queries, used by the functions below
 
-def SQL_Select(Table: str, Values: list, Condition: dict = {}) -> str:
+def get_primary_key(conn, table, schema=None) -> str | None:
+
     '''
+    Get the primary key column name for a given table.
+    Parameters
+    ----------
+
+    conn : pymysql.connections.Connection
+        The database connection.
+    table : str
+        The name of the table.
+    schema : str, optional
+        The database schema (database name). If None, the current database is used.
+    Returns -------
+    str or None
+        The primary key column name, or None if not found.
+    '''
+
+    sql = """
+        SELECT COLUMN_NAME
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = %s
+          AND TABLE_NAME = %s
+          AND COLUMN_KEY = 'PRI'
+        LIMIT 1
+    """
+    if schema is None:
+        with conn.cursor() as cur:
+            cur.execute("SELECT DATABASE()")
+            schema = cur.fetchone()[0]
+
+    with conn.cursor() as cur:
+        cur.execute(sql, (schema, table))
+        row = cur.fetchone()
+
+    return row[0] if row else None
+
+
+def UPSERT(conn, table, data) -> int | None:
+    """
+    Generic MySQL UPSERT using PyMySQL.
+
+    - User does NOT provide primary key
+    - Returns primary key value if present
+    Parameters
+    ----------
+    conn : pymysql.connections.Connection
+        The database connection.
+    table : str
+        The name of the table.
+    data : dict
+        The data to insert or update.
+    Returns -------
+    int or None
+        The primary key value if present, otherwise None.
+
+    """
+
+    pk = get_primary_key(conn, table)
+
+    columns = list(data.keys())
+    values = list(data.values())
+
+    placeholders = ", ".join(["%s"] * len(columns))
+    col_list = ", ".join(f"`{c}`" for c in columns)
+
+    update_parts = [
+        f"`{c}` = new.`{c}`"
+        for c in columns
+    ]
+
+    # Force LAST_INSERT_ID(pk) so we get pk on UPDATE too
+    # only if pk is not part of the columns being updated
+    if pk and pk not in columns:
+        update_parts.append(
+            f"`{pk}` = LAST_INSERT_ID(`{pk}`)"
+        )
+
+    update_clause = ", ".join(update_parts)
+
+    sql = f"""
+        INSERT INTO `{table}` ({col_list})
+        VALUES ({placeholders}) AS new
+        ON DUPLICATE KEY UPDATE
+            {update_clause}
+    """
+
+    with conn.cursor() as cursor:
+        cursor.execute("SET SESSION sql_mode='STRICT_ALL_TABLES';")
+       
+        if args.debug: 
+            print(f"Executing UPSERT on table {table} with data {data}")
+            query = cursor.mogrify(sql, values)
+            print("Prepared Query String:")
+            print(query)
+        cursor.execute(sql, values)
+
+        return cursor.lastrowid if pk else None
+
+
+
+
+'''
     Generate a SQL query to select values in a table. It compares floats with 1E-5
     tolerance!
 
@@ -103,7 +205,9 @@ def SQL_Select(Table: str, Values: list, Condition: dict = {}) -> str:
         SELECT Values[0], (...), Values[-1] FROM Table
           WHEN Condition.keys()[0]=Condition.value()[0] AND ...
                Condition.keys()[-1]=Condition.value()[-1]
-    '''
+'''
+
+def SQL_Select(Table: str, Values: list, Condition: dict = {}) -> str:
     Query = (
         ' SELECT ' + ", ".join(map(lambda x: f'`{x}`', Values)) +
         f' FROM `{Table}` '
@@ -145,10 +249,7 @@ def SQL_Create(Table: str, Values: dict) -> str:
         f' INSERT INTO `{Table}` (' +
         ", ".join(map(lambda x: f'`{x}`', Values.keys())) +
         ") VALUES (" + (','.join(["%s"]*len(Values)))  + ')'
-    )
-    print(Query)
-    
-
+    )    
     return Query
 
 
@@ -389,7 +490,7 @@ def DBEntry(Table: str, LipidInformation: dict, Minimal: dict = {}) -> tuple:
         The ID of the created/updated entry.
     '''
 
-    # --- TEMPORAL -----
+    # --- TEMPORARY -----
     # Delete the Nan from the LipidInformation dictionary
     # The presence of NaN in the DB leads to problems dealing with the data
     # A solution must be found for this problem in the future.
@@ -450,7 +551,8 @@ def load_lipid_metadata(metadata_path, database):
         'name': lipid_LipidInfo.get('name', '') or molecule_id, 
         'mapping': lipid_LipidInfo.get('mapping', molecule_id),
     }
-    lipid_id = DBEntry('lipids', lipid_data, {'molecule': molecule_id})
+    lipid_id = UPSERT(database, 'lipids', lipid_data)
+    if args.debug: print ("Inserted/Updated lipid {} with ID {}".format(molecule_id, lipid_id))
 
     # Insert synonyms
     synonyms = bioschema.get('alternateNames', [])
@@ -459,7 +561,7 @@ def load_lipid_metadata(metadata_path, database):
             'lipid_id': lipid_id,
             'synonym': synonym
         }
-        CreateEntry('lipids_synonyms', synonym_data)
+        UPSERT(database, 'lipids_synonyms', synonym_data)
         if args.debug: print ("Inserted synonym {} for lipid ID {}".format(synonym, lipid_id)) 
 
     # Insert bioschema properties as properties (optional, can be extended)
@@ -473,7 +575,7 @@ def load_lipid_metadata(metadata_path, database):
             'unit': '',
             'type': 'string'
         }
-        prop_id = CreateEntry('properties', prop_data)
+        prop_id = UPSERT(database, 'properties', prop_data)
         # Link lipid and property
         LinkEntries('lipid_properties', {'lipid_id': lipid_id, 'property_id': prop_id})
         if args.debug: print ("Linked property {} to lipid ID {}".format(prop, lipid_id))
@@ -487,14 +589,14 @@ def load_lipid_metadata(metadata_path, database):
             'url_schema': '',
             'version': ''
         }
-        db_id = DBEntry('db', db_data, {'name': db_name})
+        db_id = UPSERT(database, 'db', db_data)
         crossref_data = {
             'db_id': db_id,
             'lipid_id': lipid_id,
             'external_id': ext_id,
             'external_url': ''
         }
-        LinkEntries('cross_references', crossref_data)
+        UPSERT(database, 'cross_references', crossref_data)
 
 
 
@@ -514,13 +616,13 @@ def load_experiment_composition(Exp_ID, README) -> None:
     '''
     # Load membrane composition
     for lipid_name, lipid_data in README.get("MEMBRANE_COMPOSITION", README.get("MOLAR_FRACTIONS", {})).items():
-        lipid_id = DBEntry('lipids',{'molecule': lipid_name},{'molecule': lipid_name})
+        lipid_id = UPSERT(database, 'lipids', {'molecule': lipid_name})
         comp_data = {
             'experiment_id': Exp_ID,
             'lipid_id': lipid_id,
             'mol_fraction': float(lipid_data),
         }
-        DBEntry('experiments_membrane_composition', comp_data, comp_data)
+        UPSERT(database, 'experiments_membrane_composition', comp_data)
         if args.debug: print (" -- Linked lipid {} to experiment {}, {}".format(lipid_name, Exp_ID, lipid_data))
     
     # Load solution composition
@@ -530,7 +632,7 @@ def load_experiment_composition(Exp_ID, README) -> None:
             'compound': compound_name,
             'concentration': float(compound_data),
         }
-        DBEntry('experiments_solution_composition', ion_comp_data, ion_comp_data)
+        UPSERT(database, 'experiments_solution_composition', ion_comp_data)
         if args.debug: print (" -- Linked ion {} to experiment {}, {}".format(compound_name, Exp_ID, compound_data))
 
 def load_experiment_properties(id, data) -> None:
@@ -618,26 +720,24 @@ if __name__ == '__main__':
             with open(osp.join(PATH_EXPERIMENTS_OP, expOP, 'README.yaml')) as File:
                 README = yaml.load(File, Loader=yaml.FullLoader)
             section_from_path = os.path.basename(os.path.normpath(expOP))
-            for file in os.listdir(osp.join(PATH_EXPERIMENTS_OP, expOP)):
-                if file.endswith(".json"):
-
-                    ExpInfo = {
-                        "article_doi": README.get("ARTICLE_DOI", README.get("DOI", ""))  ,
-                        "data_doi": README.get("DATA_DOI", ""),
-                        "section" : README.get("SECTION", section_from_path),
-                        "type" : "OP",
-                        "path": genRpath(osp.join(PATH_EXPERIMENTS_OP, expOP, file))}
-
-                    # Entry in the DB with the LipidInfo of the experiment
-                    Exp_ID = DBEntry('experiments', ExpInfo, ExpInfo)
-                    if args.debug: print ("Inserted experiment {} of type OP".format(Exp_ID))
-                    # Now add the membrane composition if available
-                    load_experiment_composition(Exp_ID, README)
-                    load_experiment_properties(Exp_ID, README)
-                    
-
+            # check if section is numeric, skip if not
+            if not section_from_path.isdigit():
+                print(f"WARNING: Section '{section_from_path}' in experiment path '{expOP}' is not numeric. Skipping experiment.")
+                continue         
+            ExpInfo = {
+                "article_doi": README.get("ARTICLE_DOI", README.get("DOI", ""))  ,
+                "data_doi": README.get("DATA_DOI", ""),
+                "section" : README.get("SECTION", section_from_path),
+                "type" : "OP",
+                "path": genRpath(osp.join(PATH_EXPERIMENTS_OP, expOP))}
+            # Entry in the DB with the LipidInfo of the experiment
+            Exp_ID = UPSERT(database, 'experiments', ExpInfo)
+            if args.debug: print ("Inserted experiment {} of type OP".format(Exp_ID))
+            # Now add the membrane composition if available
+            load_experiment_composition(Exp_ID, README)
+            load_experiment_properties(Exp_ID, README)
+ 
     # -- TABLE `experiments_FF`
-
         # Find files with form factor experiments
         EXP_FF = []
         PATH_EXPERIMENTS_FF = osp.join(NMLDB_EXP_PATH, "FormFactors")
@@ -650,24 +750,43 @@ if __name__ == '__main__':
 
         # Iterate over each experiment
         for expFF in EXP_FF:
-
             # Get the DOI of the experiment and the path to the README.yaml file
             with open(osp.join(PATH_EXPERIMENTS_FF, expFF, 'README.yaml')) as File:
                 README = yaml.load(File, Loader=yaml.FullLoader)
             section_from_path = os.path.basename(os.path.normpath(expFF))
-            for file in os.listdir(osp.join(PATH_EXPERIMENTS_FF, expFF)):
-                if file.endswith(".json"):
-                    ExpInfo = {"article_doi": README.get("ARTICLE_DOI", README.get("DOI", ""))  ,
-                            "data_doi": README.get("DATA_DOI", ""),
-                            "section" : README.get("SECTION", section_from_path),
-                                "type" : "FF",
-                                "path": genRpath(osp.join(PATH_EXPERIMENTS_FF, expFF, file))}
-                    # Entry in the DB with the LipidInfo of the experiment
-                    Exp_ID = DBEntry('experiments', ExpInfo, ExpInfo)
-                    if args.debug: print ("Inserted experiment {} of type FF".format(Exp_ID))
-                    # Now add the membrane composition if available
-                    load_experiment_composition(Exp_ID, README)
-                    load_experiment_properties(Exp_ID, README)
+            if len(expFF.split('/')) != 3:
+                print(f"WARNING: Experiment path '{expFF}' does not follow expected structure. Skipping experiment.")
+                continue
+            # check if section is numeric, skip if not
+            if not section_from_path.isdigit():
+                print(f"WARNING: Section '{section_from_path}' in experiment path '{expFF}' is not numeric. Skipping experiment.")
+                continue
+            exp_path_full = osp.join(PATH_EXPERIMENTS_FF, expFF)
+            # Load form factor data file (assuming only one .json file per experiment)
+            form_factor_files = glob.glob(osp.join(exp_path_full, '*.json'))
+            form_factor_data = None
+            if form_factor_files:
+                if args.debug: print(f"Found form factor data files in experiment path '{exp_path_full}': {form_factor_files}")
+                with open(form_factor_files[0], 'r') as ff_file:
+                    form_factor_data = json.load(ff_file)
+                # You can process form_factor_data as needed here  
+            else:
+                print(f"WARNING: No form factor data files found in experiment path '{exp_path_full}'")
+            
+            ExpInfo = {
+                        "article_doi": README.get("ARTICLE_DOI", README.get("DOI", ""))  ,
+                        "data_doi": README.get("DATA_DOI", ""),
+                        "section" : README.get("SECTION", section_from_path),
+                        "type" : "FF",
+                        "data": json.dumps(form_factor_data) if form_factor_data else None,
+                        "path": expFF
+                    }
+            # Entry in the DB with the LipidInfo of the experiment
+            Exp_ID = UPSERT(database, 'experiments', ExpInfo)
+            if args.debug: print ("Inserted experiment {} of type FF".format(Exp_ID))
+            # Now add the membrane composition if available
+            load_experiment_composition(Exp_ID, README)
+            load_experiment_properties(Exp_ID, README)
 
 
                     
@@ -697,7 +816,7 @@ if __name__ == '__main__':
             # if True:
             if args.debug: 
                 print("\nCollecting data from system:")
-                print(README["path"] + "\n")
+                print("System path: " + README["path"] + "\n")
 
             # The location of the files
             PATH_SIMULATION = osp.join(NMLDB_SIMU_PATH, README["path"])
@@ -745,7 +864,7 @@ if __name__ == '__main__':
                 }
 
             # Entry in the DB with the LipidInfo of the FF
-            FF_ID = DBEntry('forcefields', FFInfo, FFInfo)
+            FF_ID = UPSERT(database, 'forcefields', FFInfo)
 
     # -- TABLE `lipids_forcefields`
             # Empty dictionaries for the LipidInfo of the lipids
@@ -772,7 +891,7 @@ if __name__ == '__main__':
                     if not Lip_ID:
                         print("WARNING: Lipid {} not found in the DB. Adding it.".format(key))
                         # If it does not exist, create it
-                        Lip_ID = DBEntry('lipids', LipidInfo, LipidInfo)
+                        Lip_ID = UPSERT(database, 'lipids', LipidInfo)
                     # Link the lipid with the forcefield
                     LinkEntries('lipids_forcefields',
                                 {"lipid_id": Lip_ID,
@@ -854,7 +973,7 @@ if __name__ == '__main__':
                         }
 
                     # Entry in the DB with the LipidInfo of the ion
-                    Ion_ID = DBEntry('ions', LipidInfo, LipidInfo)
+                    Ion_ID = UPSERT(database, 'ions', LipidInfo)
 
                     # Store LipidInformation for further steps: Ions[name]=[ID,number]
                     Ions[key] = [Ion_ID, README["COMPOSITION"][key]["COUNT"]]
@@ -898,7 +1017,7 @@ if __name__ == '__main__':
                 }
 
             # Entry in the DB with the LipidInfo of the membrane
-            Mem_ID = DBEntry('membranes', LipidInfo, LipidInfo)
+            Mem_ID = UPSERT(database, 'membranes', LipidInfo)
 
     # -- TABLE `trajectories`
             # Collect the LipidInformation about the simulation
@@ -943,7 +1062,7 @@ if __name__ == '__main__':
                 }
 
             # Entry in the DB with the LipidInfo of the trajectory
-            Trj_ID = DBEntry('trajectories', trajectoryInfo, Minimal)
+            Trj_ID = UPSERT(database, 'trajectories', trajectoryInfo)
 
     # -- TABLE `trajectories_lipids`
             TrjL_ID = {}
@@ -964,7 +1083,7 @@ if __name__ == '__main__':
                     }
 
                 # Entry in the DB with the LipidInfo of the lipids in the simulation
-                TrjL_ID[lipid] = DBEntry('trajectories_lipids', LipidInfo, Minimal)
+                TrjL_ID[lipid] = UPSERT(database, 'trajectories_lipids', LipidInfo)
 
     
     # -- TABLE `trajectories_ions`
@@ -991,7 +1110,7 @@ if __name__ == '__main__':
                     "ion_id":        Ions[ion][0]}
 
                 # Entry in the DB with the LipidInfo of the ions in the simulation
-                TrjI_ID[ion] = DBEntry('trajectories_ions', LipidInfo, Minimal)
+                TrjI_ID[ion] = UPSERT(database, 'trajectories_ions', LipidInfo)
 
    
     # -- TABLE `trajectories_membranes``
@@ -1001,7 +1120,7 @@ if __name__ == '__main__':
                 "membrane_id": Mem_ID,
                 "name": README["SYSTEM"]}
 
-            _ = DBEntry('trajectories_membranes', LipidInfo, LipidInfo)
+            _ = UPSERT(database, 'trajectories_membranes', LipidInfo)
 
     # -- TABLE `trajectories_analysis`
             # Find the bilayer thickness
@@ -1069,7 +1188,7 @@ if __name__ == '__main__':
             Minimal = {"trajectory_id": Trj_ID}
 
             # Entry in the DB with the LipidInfo of the analysis of the simulation
-            _ = DBEntry('trajectories_analysis', LipidInfo, Minimal)
+            _ = UPSERT(database, 'trajectories_analysis', LipidInfo)
 
     # -- TABLE `trajectories_analysis_lipids`
             for lipid in Lipids:
@@ -1105,7 +1224,7 @@ if __name__ == '__main__':
 
                 # Entry in the DB with the LipidInfo of the analysis of the lipid
                 # in the simulation
-                _ = DBEntry('trajectories_analysis_lipids', LipidInfo, Minimal)
+                _ = UPSERT(database, 'trajectories_analysis_lipids', LipidInfo)
 
    
     # -- TABLE `trajectory_analysis_ions`
@@ -1120,7 +1239,7 @@ if __name__ == '__main__':
 
                 # Entry in the DB with the LipidInfo of the analysis of the ion in the
                 # simulation
-                _ = DBEntry('trajectories_analysis_ions', LipidInfo, LipidInfo)
+                _ = UPSERT(database, 'trajectories_analysis_ions', LipidInfo)
 
     # --- TEMPORAL -----
     # The table may be removed in the future, and the quality included in the
@@ -1165,7 +1284,7 @@ if __name__ == '__main__':
             Minimal = {"trajectory_id": Trj_ID}
 
             # Entry in the DB with the LipidInfo of ranking
-            _ = DBEntry('ranking_global', LipidInfo, Minimal)
+            _ = UPSERT(database, 'ranking_global', LipidInfo)
     # ------------------
     # -- TABLE `ranking_lipids`
             # Empty dictionary for the ranking
@@ -1213,7 +1332,7 @@ if __name__ == '__main__':
                            "lipid_id":      Lipids_ID[lipid]}
 
                 # Entry in the DB with the LipidInfo of ranking
-                _ = DBEntry('ranking_lipids', LipidInfo, Minimal)
+                _ = UPSERT(database, 'ranking_lipids', LipidInfo)
     # ------------------
             
    
@@ -1225,37 +1344,40 @@ if __name__ == '__main__':
                     ExpOP = README["EXPERIMENT"]["ORDERPARAMETER"]
                     if args.debug:
                         print("Found ORDERPARAMETER experiments for system: " +
-                            README["path"])   
+                            README["path"])
                     # Iterate over the lipids
                     for mol in ExpOP:
                         # Check if there is an experiment associated to the lipid
-                        if type(ExpOP[mol]) is dict:
-                           
-                            for doi, path in ExpOP[mol].items():
-                                for file in os.listdir(
-                                        osp.join(PATH_EXPERIMENTS_OP, path)):
-                                    if file.endswith(".json"):
+                        if type(ExpOP[mol]) is list or type(ExpOP[mol]) is dict or len(ExpOP[mol]) > 0:
+                            #print("Processing Trajectory {} lipid:{}".format(README["path"], mol))                     
+                            for path in ExpOP[mol]:
+                                exp_path = osp.join(PATH_EXPERIMENTS_OP, path)
+                                if not osp.exists(exp_path):
+                                    print("WARNING: Experiment path does not exist: " +
+                                          exp_path + " for system: " +
+                                          README["path"], file=sys.stderr)  
+                                    continue
+                                for file in os.listdir(exp_path):
+                                    if file.endswith(".json") and file.startswith(mol + '_'):
                                         if args.debug:
                                             print("Linking trajectory {} with experiment {} for lipid {}".format(
-                                                Trj_ID, doi, mol))
+                                                Trj_ID, file, mol))
                                         Linked_Experiments_OP.append(README["path"] + ":" + mol +" ID:" + str(Trj_ID))
-                                        
+                                        exp_id = CheckEntry(
+                                                    'experiments_OP', {
+                                                      #"article_doi": path,
+                                                    "path": "experiments/OrderParameters/"+path})
+                                        if not exp_id:
+                                            print("WARNING: Experiment not found in DB: " +
+                                                  path + " for system: " +
+                                                  README["path"], file=sys.stderr)  
+                                            continue
                                         LipidInfo = {
                                             "trajectory_id": Trj_ID,
                                             "lipid_id": Lipids_ID[mol],
-                                            "experiment_id":
-                                                CheckEntry(
-                                                  'experiments_OP', {
-                                                      "article_doi": doi,
-                                                      "path": genRpath(osp.join(
-                                                          PATH_EXPERIMENTS_OP,
-                                                          path, file))
-                                                        }
-                                                    )
-                                               }
-
-                                        _ = DBEntry('trajectories_experiments_OP',
-                                                    LipidInfo, LipidInfo)
+                                            "experiment_id": exp_id,
+                                        }        
+                                        _ =  UPSERT(database, 'trajectories_experiments_OP', LipidInfo)
                         
                 else:
                     if args.debug:
@@ -1278,19 +1400,31 @@ if __name__ == '__main__':
 
                                 for file in os.listdir(osp.join(
                                         PATH_EXPERIMENTS_FF, path)):
+                                    exp_id = CheckEntry(
+                                                    'experiments_FF', {
+                                                      #"article_doi": path,
+                                                    "path": genRpath(osp.join(
+                                                             PATH_EXPERIMENTS_FF,
+                                                             path, file))
+                                                    })
+                                    if not exp_id:
+                                        print("WARNING: Experiment not found in DB: " +
+                                                path + " for system: " +
+                                                README["path"], file=sys.stderr)  
+                                        continue
+
                                     if file.endswith(".json"):
                                         LipidInfo = {
                                             "trajectory_id": Trj_ID,
-                                            "experiment_id": CheckEntry(
-                                                     'experiments_FF', {
-                                                         "path": genRpath(osp.join(
-                                                             PATH_EXPERIMENTS_FF,
-                                                             path, file))
-                                                     })
-                                                 }
+                                            "experiment_id": exp_id,
+                                                     }
 
-                                        _ = DBEntry('trajectories_experiments_FF',
-                                                    LipidInfo, LipidInfo)
+                                        _ = UPSERT(database, 'trajectories_experiments_FF',
+                                                    LipidInfo)
+                                        if args.debug:
+                                            print("Linking trajectory {} with experiment {}".format(
+                                                Trj_ID, file)) 
+                                        Linked_Experiments_FF.append(README["path"] +" ID:" + str(Trj_ID))
 
         except Exception as err:
             print ("------------------------------------------------------\n", file=sys.stderr)
@@ -1335,17 +1469,11 @@ if __name__ == '__main__':
                 }
 
             for missing_ID in missing_IDs:
-
-                #print("WARNING: Adding missing ID:", missing_ID, file=sys.stderr)
+                if args.debug:
+                    print("Found missing trajectory ID:", missing_ID, file=sys.stderr)
                 trajectoryInfo["id"] = missing_ID
 
-                cursor.execute(
-                    "INSERT INTO `trajectories` (" +
-                    ','.join(map(lambda x: '`' + str(x) + '`', trajectoryInfo.keys())) +
-                    ") VALUES (" +
-                    ','.join(map(str, trajectoryInfo.values())) +
-                    ") "
-                    )
+                UPSERT(database, 'trajectories', trajectoryInfo)
 
         database.commit()
 
@@ -1373,6 +1501,10 @@ if __name__ == '__main__':
         print(
             len(Linked_Experiments_OP), "ORDERPARAMETER experiments were linked to simulations."
             )
+    if len(Linked_Experiments_FF) >= 0:
+        print(
+            len(Linked_Experiments_FF), "FORMFACTOR experiments were linked to simulations."
+            )   
     
 ####################
 

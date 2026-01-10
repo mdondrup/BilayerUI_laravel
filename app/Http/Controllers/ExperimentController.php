@@ -15,6 +15,10 @@ class ExperimentController extends Controller
             ->select('experiments.id', 'article_doi', 'data_doi', 'section', 'type', 'path')
             ->leftJoin('experiments_membrane_composition as emc', 'experiments.id', '=', 'emc.experiment_id')
             ->groupBy('experiments.id')
+            ->orderBy('type', 'asc')
+            ->orderBy('article_doi', 'asc')
+            ->orderBy('section', 'asc')
+            
             ->selectRaw('COUNT(emc.lipid_id) as lipid_count')
             ->paginate(10);
 

@@ -48,11 +48,14 @@ CREATE TABLE `experiments` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `article_doi` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
   `data_doi` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
-  `section` bigint  NOT NULL,
+  `section` bigint DEFAULT 1 NOT NULL,
   `path` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
   `type` enum('FF','OP') CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT 'FF',
+  `data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL, 
+  -- JSON data with experiment details, e.g. FF parameters or OP details
   PRIMARY KEY (`id`),
-  UNIQUE KEY `experiments_doi_section_type_path_unique` (`article_doi`,`section`,`type`,`path`)
+  UNIQUE KEY `experiments_path_unique` (`path`),
+  UNIQUE KEY `experiments_doi_section_type_path_unique` (`article_doi`,`section`,`type`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -70,7 +73,8 @@ CREATE VIEW `experiments_FF` AS
     `experiments`.`article_doi` AS `doi`,
     `experiments`.`data_doi` AS `data_doi`,
     `experiments`.`path` AS `path`,
-    `experiments`.`section` AS `section`
+    `experiments`.`section` AS `section`,
+    `experiments`.`data` AS `FF_data`
    FROM `experiments`
   WHERE (`experiments`.`type` = 'FF');
 
@@ -120,7 +124,6 @@ CREATE TABLE `experiment_property` (
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `unit` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `parent_id` bigint unsigned DEFAULT NULL,
   `type` ENUM('string', 'integer', 'numeric', 'float', 'dict', 'array') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -140,6 +143,7 @@ CREATE TABLE `experiments_membrane_composition` (
   `experiment_id` bigint unsigned NOT NULL,
   `lipid_id` bigint unsigned NOT NULL,
   `mol_fraction` float NOT NULL,
+  `data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL, -- JSON data with OP details
   PRIMARY KEY (`id`),
   UNIQUE KEY (`experiment_id`,`lipid_id`),
   CONSTRAINT `experiments_membrane_composition_ibfk_1` FOREIGN KEY (`experiment_id`) REFERENCES `experiments` (`id`),
@@ -158,6 +162,7 @@ CREATE TABLE `experiments_solution_composition` (
   `experiment_id` bigint unsigned NOT NULL,
   `compound` varchar(255) NOT NULL,
   `concentration` float NOT NULL,
+  `data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL, -- JSON data with additional solution composition details
   PRIMARY KEY (`id`),
   UNIQUE KEY (`experiment_id`,`compound`),
   CONSTRAINT `solution_composition_ibfk_1` FOREIGN KEY (`experiment_id`) REFERENCES `experiments` (`id`)
@@ -211,8 +216,8 @@ DROP TABLE IF EXISTS `lipids`;
 CREATE TABLE `lipids` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `molecule` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `mapping` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `mapping` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `lipids_name_key` (`name`),
   UNIQUE KEY `lipids_molecule_key` (`molecule`)
@@ -460,6 +465,7 @@ CREATE TABLE `trajectories` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `water_resname` varchar(8) NOT NULL DEFAULT 'IMPLICIT',
   PRIMARY KEY (`id`),
+  -- UNIQUE KEY `trajectories_unique` (`forcefield_id`,`membrane_id`,`system`, `doi`),
   KEY `forcefield_id` (`forcefield_id`),
   KEY `membrane_id` (`membrane_id`),
   CONSTRAINT `trajectories_ibfk_1` FOREIGN KEY (`forcefield_id`) REFERENCES `forcefields` (`id`),
