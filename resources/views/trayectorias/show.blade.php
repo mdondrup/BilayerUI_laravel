@@ -249,18 +249,21 @@ use Illuminate\Support\Collection;
         }
     }
 
-    function genDataParamOrderExperiment($GitHubURL, $FileUrl, &$labelData, &$data, &$dataerror, &$maxData, &$minData, $Grupo, $ind)
+    function genDataParamOrderExperiment($GitHubURL, $FileUrl, &$labelData, &$data, &$dataerror, &$maxData, &$minData, $Grupo, $ind, $lipid_id)
     {
         $jsonFileUrl = '';
 
          //if (strlen($FileUrl)==0) return;
+        if ($lipid_id != '') {
+            
+            $jsonFileUrl = $GitHubURL . $FileUrl . '/' . $lipid_id. '_Order_Parameters.json'; //10
+        } else {
+            $jsonFileUrl = $GitHubURL . $FileUrl; //10
+        }
+        $jsonFile = '';
 
-        $jsonFileUrl = $GitHubURL . $FileUrl;
-
-      
         $jsonFile = file_get_contents($jsonFileUrl);
 
-       
         $jsonFile = str_replace('NaN', 0.0, $jsonFile);
 
         $jsonFileData = [];
@@ -1787,48 +1790,7 @@ die();
             //echo 'DrawChart("myChartOrderParam",[' . $DataStr . '],[' . $DataError . '],[' . $DataError . '],1,"line","Order parameters","","-SCH",1,5,true,true,false);';
             echo 'DrawChart("myChartOrderParam",[' . $DataStr . '],[' . $DataValue . '],[],[],1,"line","Order parameters","","SCH",1,5,true,true,false,"");';
         }
-
-        /*
-        if ($trayectoria->TrayectoriaAnalisisLipidosfunc != null) {
-            $nlip = 1;
-
-            foreach ($trayectoria->TrayectoriaAnalisisLipidosfunc as $key => $value) {
-                genDataParamOrde($GitHubURL, $value->order_parameters_file, $DataStr, $DataValue, $DataError, $maxValue, $minValue, 'G1');
-
-                echo 'DrawChart("myChartOrderParamLipidsg1' . $nlip . '",[' . $DataStr . '],[' . $DataError . '],[' . $DataError . '],1,"line","Tail S1","","-SCH",1,5,true,true,false);';
-
-                genDataParamOrde($GitHubURL, $value->order_parameters_file, $DataStr, $DataValue, $DataError, $maxValue, $minValue, 'G2');
-                echo 'DrawChart("myChartOrderParamLipidsg2' . $nlip . '",[' . $DataStr . '],[' . $DataError . '],[' . $DataError . '],1,"line","Tail S2","","-SCH",1,5,true,true,false);';
-                genDataParamOrde($GitHubURL, $value->order_parameters_file, $DataStr, $DataValue, $DataError, $maxValue, $minValue, 'G3');
-                echo 'DrawChart("myChartOrderParamLipidsg3' . $nlip . '",[' . $DataStr . '],[' . $DataError . '],[' . $DataError . '],1,"line","Headgroup","","-SCH",1,5,true,true,false);';
-                $nlip++;
-            }
-        }
-
-        // EXPERIMENTS  EXPERIMENTS  EXPERIMENTS  EXPERIMENTS  EXPERIMENTS
-
-        if ($trayectoria->TrayectoriaAnalisisLipidosfunc != null) {
-            $nlip = 1;
-
-            foreach ($trayectoria->TrayectoriaAnalisisLipidosfunc as $key => $value) {
-                if ($value->order_parameters_experiment != null) {
-                    genDataParamOrderExperiment($GitHubURLEXP, $value->order_parameters_experiment, $DataExpStr, $DataExpValue, $DataExpError, $maxValue, $minValue, 'G1');
-
-                    echo 'DrawChart("myChartOrderParamLipidsEXPg1' . $nlip . '",[' . $DataExpStr . '],[' . $DataExpError . '],"",1,"line","Tail S1","","-SCH",1,5,true,true,false);';
-
-                    genDataParamOrderExperiment($GitHubURLEXP, $value->order_parameters_experiment, $DataStr, $DataValue, $DataError, $maxValue, $minValue, 'G2');
-
-                    echo 'DrawChart("myChartOrderParamLipidsEXPg2' . $nlip . '",[' . $DataStr . '],[' . $DataError . '],"",1,"line","Tail S2","","-SCH",1,5,true,true,false);';
-
-                    genDataParamOrderExperiment($GitHubURLEXP, $value->order_parameters_experiment, $DataStr, $DataValue, $DataError, $maxValue, $minValue, 'G3');
-
-                    echo 'DrawChart("myChartOrderParamLipidsEXPg3' . $nlip . '",[' . $DataStr . '],[' . $DataError . '],"",1,"line","Headgroup","","-SCH",1,5,true,true,false);';
-
-                    $nlip++;
-                }
-            }
-        }
-        */
+       
 
         if ($trayectoria->TrayectoriaAnalisisLipidosfunc != null) {
             $nlip = 1;
@@ -1845,17 +1807,20 @@ die();
                     $DataExpValueArray = array();
 $DataExpLabelArray = array();
                     // HACK CARGA DE EXPERIMETOS VAN A SER MAS DE UNO ASI QUE A VER SOMO SE HACE ESTO...
-                    //genDataParamOrderExperiment($GitHubURLEXP, $value->order_parameters_experiment, $DataExpStr, $DataExpValue, $DataExpError, $maxValue, $minValue, 'G1', $ind);
-
+                    // HACK (english) LOADING EXPERIMENTS THEY WILL BE MORE THAN () ONE SO LET'S SEE HOW TO DO THIS...
+                    // Problem is that now we have multiple experimental data for the same order parameter simulation data.
+                    // So we have to load all the experimental data and plot them together with the simulation data
                     foreach ($trayectoria->experimentsOP as $keyOP => $valueOP) {
 
                         if (!is_null($valueOP->path)) {
                             if (!empty(trim($valueOP->path))) {
-
-
-                              genDataParamOrderExperiment($GitHubURLEXP, $valueOP->path, $DataExpStr, $DataExpValue, $DataExpError, $maxValue, $minValue, 'G1', $ind);
-
-                             
+                              genDataParamOrderExperiment($GitHubURLEXP, 
+                              $valueOP->path, 
+                              $DataExpStr, 
+                              $DataExpValue, 
+                              $DataExpError, $maxValue, $minValue, 'G1', $ind, 
+                              $nlip);
+                              
                               $DataExpStrArray[] = $DataExpStr;
                               $DataExpValueArray[] = $DataExpValue;
                               $DataExpLabelArray[] = $valueOP->doi;
@@ -1877,12 +1842,22 @@ $DataExpLabelArray = array();
                           $DataExpStrArray = array();
                           $DataExpValueArray = array();
                           $DataExpLabelArray = array();
-                            //genDataParamOrderExperiment($GitHubURLEXP, $value->order_parameters_experiment, $DataExpStr, $DataExpValue, $DataExpError, $maxValue, $minValue, 'G2', $ind);
                             foreach ($trayectoria->experimentsOP as $keyOP => $valueOP) {
 
                                 if (!is_null($valueOP->path)) {
                                     if (!empty(trim($valueOP->path))) {
-                                      genDataParamOrderExperiment($GitHubURLEXP, $valueOP->path, $DataExpStr, $DataExpValue, $DataExpError, $maxValue, $minValue, 'G2', $ind);
+                                      genDataParamOrderExperiment(
+                                            $GitHubURLEXP, 
+                                            $valueOP->path, 
+                                            $DataExpStr, 
+                                            $DataExpValue, 
+                                            $DataExpError, 
+                                            $maxValue, 
+                                            $minValue, 
+                                            'G2', 
+                                            $ind,
+                                            $nlip
+                                        );
                                       $DataExpStrArray[] = $DataExpStr;
                                       $DataExpValueArray[] = $DataExpValue;
                                         $DataExpLabelArray[] = $valueOP->doi;
@@ -1899,15 +1874,22 @@ $DataExpLabelArray = array();
                     genDataParamOrdeFusion($GitHubURL, $value->order_parameters_file, $DataStr, $DataValue, $DataError, $maxValue, $minValue, 'G3');
                   if (!is_null($value->order_parameters_experiment)) {
                         if (!empty(trim($value->order_parameters_experiment))) {
-                            //die('3');
-                            //genDataParamOrderExperiment($GitHubURLEXP, $value->order_parameters_experiment, $DataExpStr, $DataExpValue, $DataExpError, $maxValue, $minValue, 'G3', $ind);
                               $DataExpStrArray = array();
                               $DataExpValueArray = array();
                               $DataExpLabelArray = array();
                                 foreach ($trayectoria->experimentsOP as $keyOP => $valueOP) {
                                     if (!is_null($valueOP->path)) {
                                         if (!empty(trim($valueOP->path))) {
-                                          genDataParamOrderExperiment($GitHubURLEXP, $valueOP->path, $DataExpStr, $DataExpValue, $DataExpError, $maxValue, $minValue, 'G3', $ind);
+                                          genDataParamOrderExperiment($GitHubURLEXP, 
+                                            $valueOP->path, 
+                                            $DataExpStr, 
+                                            $DataExpValue, 
+                                            $DataExpError, 
+                                            $maxValue, 
+                                            $minValue, 
+                                            'G3', 
+                                            $ind,
+                                            $nlip);
                                           $DataExpStrArray[] = $DataExpStr;
                                           $DataExpValueArray[] = $DataExpValue;
                                           $DataExpLabelArray[] = $valueOP->doi;
