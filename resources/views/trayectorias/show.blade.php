@@ -1363,15 +1363,12 @@ use Illuminate\Support\Collection;
       responsive, AutoSkiping, showLeyend, xtype) {
 
       var labels1 = names;
-      //var labels2 = names2;
       var ArrayTop = data;
 
       var colorList = ['#FF9AA2', '#C7CEEA', '#FFB7B2', '#B5EAD7', '#FFDAC1', '#E2F0CB', ];
       var borderCol = 'rgb(255, 255, 255)';
       var borderCol2 = 'rgb(70, 70, 70)';
       var textCol = '#ffffff';
-
-
       // _____________
       // Data fusion
 
@@ -1397,20 +1394,17 @@ use Illuminate\Support\Collection;
 
 // --------------------------------------------------
       labelFusion = names; // esto son los label de
-
       names2.forEach((itemArray, i) => {
         labelFusion =  uniqueArrays(labelFusion,itemArray);
       });
       var indpos = 0;
       names2.forEach((itemArray, i) => {
       console.log(itemArray);
-
         var dataFusion = [];
         // Inicializamos
         for (var i = 0; i < labelFusion.length; i++) {
           dataFusion[i] = NaN;
         }
-
         // ponemos los valores en su sitio
         for (var i = 0; i < labelFusion.length; i++) {
           pos1indx = itemArray.indexOf(labelFusion[i]);
@@ -1435,7 +1429,6 @@ use Illuminate\Support\Collection;
         };
 
         ddd.push(d);
-
       });
 
       //console.log(ddd);
@@ -1867,7 +1860,6 @@ $DataExpLabelArray = array();
                             } // Foreach
                         }
                     }
-                    //echo 'DrawChart("myChartOrderParamLipidsg2' . $nlip . '",[' . $DataStr . '],[' . $DataValue . '],' . json_encode($DataExpStr) . ',' . json_encode($DataExpValue) . ',1,"line","Tail S2","C-H bond","SCH",1,5,true,true,false,true,"");';
                     echo 'DrawChartArray("myChartOrderParamLipidsg2' . $nlip . '",[' . $DataStr . '],[' . $DataValue . '],' . json_encode($DataExpStrArray) . ',' . json_encode($DataExpValueArray) . ','.json_encode($DataExpLabelArray).',1,"line","Tail S2","C-H bond","SCH",1,5,true,true,false,true,"");';
                     echo "\r\n";
 
@@ -1923,22 +1915,7 @@ $DataExpLabelArray = array();
                 }
             }
         }
-        /*
-echo  ($GitHubURLEXP);
-echo ($trayectoria->analisis->form_factor_experiment);
-die();
-*/
-      /*  $FFpath = $trayectoria->experimentsFF->implode('path');
-
-        if (!is_null($FFpath)) {
-            if (!empty($FFpath)) {
-                if (urlFileExist2($GitHubURLEXP . $FFpath)) {
-                    if (genData2($GitHubURLEXP, $FFpath . '/FormFactor.json', $DataStr, $DataValue, $maxValue, $minValue, 1)) {
-                        echo 'DrawChart("myChartFormFactEXP",[' . $DataStr . '],[' . $DataValue . '],"","",1,"line","Form factor","Qz (\u{212B}\u{AF}\u{B9}) ","Normalized |F(qz)|  (theta/\u{212B}\u{B2})",1,0,true,true,true,false,"");';
-                    }
-                }
-            }
-        }*/
+      
         // ANALISIS ANALISIS ANALISIS ANALISIS ANALISIS
 
         if (!is_null($trayectoria->analisis)) {
@@ -1949,34 +1926,20 @@ die();
                 }
             }
             if (urlFileExist2($GitHubURL . $trayectoria->analisis->form_factor_file)) {
-
-              /*  if (!is_null($trayectoria->analisis->form_factor_experiment)) {
-                    if (genData2('https://www.databank.nmrlipids.fi/storage/', $trayectoria->analisis->form_factor_experiment . '/FormFactor.json', $DataExpStr, $DataExpValue, $maxValue, $minValue, $trayectoria->analisis->form_factor_scaling)) {
-                    }
-                }*/
                 // Datos experimentales con el nuevo formato de mysql_tablename
                 // EXPERIMENT  EXPERIMENT  EXPERIMENT  EXPERIMENT  EXPERIMENT  EXPERIMENT
                 $FFpath = $trayectoria->experimentsFF->implode('path');
-
                 if (genData2($GitHubURL, $trayectoria->analisis->form_factor_file, $DataStr, $DataValue, $maxValue, $minValue, 1)) {
-
                     $DataExpValueArray = array();
                     $DataExpLabelsArray = array();
                     foreach ($trayectoria->experimentsFF as $keyFF => $valueFF) {
                       genData2Array($GitHubURLEXP, $valueFF->path, $DataExpStr, $DataExpValue, $maxValue, $minValue, 1);
-//                      echo($GitHubURLEXP.$valueFF->path);
                       $DataExpValueArray[] = $DataExpValue;
                       $DataExpLabelsArray[] = $valueFF->doi;
                     }
                       $cleanDataExp = str_replace('"',"",json_encode($DataExpValueArray));
                         echo 'DrawChartArray2("myChartFormFact",[' . $DataValue . '],' . $cleanDataExp . ','.json_encode($DataExpLabelsArray).',0.01,"line","Form factor","Qz (\u{212B}\u{AF}\u{B9}) ","  |F(Qz)|  ",1,0,true,true,true,true,"linear");';
                         echo "\r\n";
-
-                    /*} else {
-                        //echo 'DrawChart("myChartFormFact",[' . $DataStr . '],[' . $DataValue . '],"","",0.01,"line","Form factor","Qz (\u{212B}\u{AF}\u{B9}) ","  |F(Qz)|  ",1,0,true,true,true,false,"linear");';
-                        echo 'DrawChart("myChartFormFact",[],[' . $DataValue . '],"","",0.01,"line","Form factor","Qz (\u{212B}\u{AF}\u{B9}) ","  |F(Qz)|  ",1,0,true,true,true,false,"linear");';
-                        echo "\r\n";
-                    }*/
                 }
             }
         }

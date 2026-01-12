@@ -71,7 +71,7 @@ parser.add_argument(
 
 # Debug mode
 parser.add_argument(
-    "-d", "--debug", action='store_true',
+    "-d", "--debug", type=int, default=0,
     help=''' Activate the debug mode. Default: %(default)s ''')     
 
 args = parser.parse_args()
@@ -172,8 +172,8 @@ def UPSERT(conn, table, data) -> int | None:
 
     with conn.cursor() as cursor:
         cursor.execute("SET SESSION sql_mode='STRICT_ALL_TABLES';")
-       
-        if args.debug: 
+        # Print query for debugging only if debug mode > 1
+        if args.debug > 1: 
             print(f"Executing UPSERT on table {table} with data {data}")
             query = cursor.mogrify(sql, values)
             print("Prepared Query String:")
@@ -185,7 +185,9 @@ def UPSERT(conn, table, data) -> int | None:
 
 
 
-'''
+
+def SQL_Select(Table: str, Values: list, Condition: dict = {}) -> str:
+    '''
     Generate a SQL query to select values in a table. It compares floats with 1E-5
     tolerance!
 
@@ -203,11 +205,10 @@ def UPSERT(conn, table, data) -> int | None:
     str
         The SQL query:
         SELECT Values[0], (...), Values[-1] FROM Table
-          WHEN Condition.keys()[0]=Condition.value()[0] AND ...
+          WHERE Condition.keys()[0]=Condition.value()[0] AND ...
                Condition.keys()[-1]=Condition.value()[-1]
 '''
 
-def SQL_Select(Table: str, Values: list, Condition: dict = {}) -> str:
     Query = (
         ' SELECT ' + ", ".join(map(lambda x: f'`{x}`', Values)) +
         f' FROM `{Table}` '
@@ -468,69 +469,6 @@ def UpdateEntry(Table: str, LipidInformation: dict, Condition: dict):
     return None
 
 
-def DBEntry(Table: str, LipidInformation: dict, Minimal: dict = {}) -> tuple:
-    '''
-    Manages entries in the DB. If the Minimal LipidInformation is not found in an
-    existing entry, a new one is created; else, the matching entry is updated
-    when a discrepancy between the minimal and the total LipidInformation appears.
-    The ID of the created/updated entry is returned. The table must have an 'id' column.
-
-    Parameters
-    ----------
-    Table : str
-        Name of the table
-    LipidInformation : dict
-        Total LipidInfomation of the entry.
-    Minimal : dict, optional
-        Minimal LipidInformation that uniquely identifies the entry (except the ID).
-
-    Returns
-    -------
-    tuple
-        The ID of the created/updated entry.
-    '''
-
-    # --- TEMPORARY -----
-    # Delete the Nan from the LipidInformation dictionary
-    # The presence of NaN in the DB leads to problems dealing with the data
-    # A solution must be found for this problem in the future.
-    for entry in LipidInformation:
-        if LipidInformation[entry] == "nan":
-            LipidInformation[entry] = 0
-    # --------------------
-
-    # Check the existence of the entry
-    EntryID = CheckEntry(Table, Minimal)
-
-    # If there is an ID associated to the minimal LipidInformation...
-    if EntryID:
-
-        # Check if the Minimal LipidInformation matches the whole LipidInformation
-        # If they don't match...
-        if LipidInformation != Minimal:
-
-            # Add the ID of the entry to the minimal LipidInformation
-            Minimal["id"] = EntryID
-
-            # Update the entry
-            UpdateEntry(Table, LipidInformation, Minimal)
-            return EntryID
-
-        # If the minimal LipidInformation and the total LipidInformation match,
-        # no update is required.
-        else:
-            if args.debug: print("It was not necessary to update entry {} in table {}"
-                  .format(EntryID, Table))
-            return EntryID
-
-    # If there is not an entry...
-    else:
-        # Create a new one with the data from LipidInformation
-        EntryID = CreateEntry(Table, LipidInformation)
-        return EntryID
-
-
-
 
 # --- Load lipid metadata and insert cross-references ---
 def load_lipid_metadata(metadata_path, database):
@@ -600,7 +538,45 @@ def load_lipid_metadata(metadata_path, database):
 
 
 
-def load_experiment_composition(Exp_ID, README) -> None:
+def check_exp(exp, README) -> bool:
+    '''
+    Check if an experiment is valid to be inserted into the DB.
+    Parameters
+    ----------    
+    :param exp: Experiment path
+    :param README: README metadata
+    
+    Returns
+    -------
+    :rtype: bool
+    :return: True if the experiment is valid, False otherwise
+    
+    '''
+
+    if args.debug: print(f"Processing experiment at path: {exp}")
+    if (not README):
+        print(f"WARNING: README.yaml in experiment path '{exp}' is empty or invalid. Skipping experiment.", file=sys.stderr)
+        return False
+    section_from_path = os.path.basename(os.path.normpath(exp))
+    section_from_readme = README.get("SECTION")
+    if section_from_readme:
+        if str(section_from_readme) != str(section_from_path):
+            print(f"WARNING: Section in README ('{section_from_readme}') does not match section from path ('{section_from_path}') in experiment path '{exp}'. Skipping experiment.", file=sys.stderr)
+            return False
+    # check if experiment path follows expected structure doi1/doi2/section
+    if exp.count('/') != 2:
+        print(f"WARNING: Experiment path '{exp}' does not follow expected structure (doi1/doi2/section). Skipping experiment.", file=sys.stderr)
+        return False
+    # check if section is numeric, skip if not
+    if not section_from_path.isdigit():
+        print(f"WARNING: Section '{section_from_path}' in experiment path '{exp}' is not numeric. Skipping experiment.", file=sys.stderr)
+        return False
+    if not README.get("ARTICLE_DOI") and not README.get("DOI"):
+        print(f"WARNING: ARTICLE_DOI is missing in README.yaml in experiment path '{exp}'. Skipping experiment.", file=sys.stderr)
+        return False
+    return True
+
+def load_experiment_composition(Exp_ID, README, ExpInfo=None) -> None:
     '''
     Load membrane and solution composition for an experiment.
     
@@ -617,10 +593,21 @@ def load_experiment_composition(Exp_ID, README) -> None:
     # Load membrane composition
     for lipid_name, lipid_data in README.get("MEMBRANE_COMPOSITION", README.get("MOLAR_FRACTIONS", {})).items():
         lipid_id = UPSERT(database, 'lipids', {'molecule': lipid_name})
+        if ExpInfo and ExpInfo.get('type') == 'OP':
+            # For OP experiments, we store OP data from the json file
+            # find the json file in the experiment path and store its contents in the DB
+            op_json_file = osp.join(PATH_EXPERIMENTS_OP, ExpInfo['path'],f"{lipid_name}_Order_Parameters.json")          
+            if not osp.exists(op_json_file):
+                print(f"WARNING: No order parameter JSON file found for lipid {lipid_name} in experiment path '{op_json_file}'", file=sys.stderr)
+                continue
+            if args.debug: print(f"Loading order parameter data from {op_json_file} for lipid {lipid_name}")
+            with open(op_json_file, 'r') as f:
+                op_data = json.load(f)
         comp_data = {
             'experiment_id': Exp_ID,
             'lipid_id': lipid_id,
             'mol_fraction': float(lipid_data),
+            'data': json.dumps(op_data) if ExpInfo and ExpInfo.get('type') == 'OP' else None,
         }
         UPSERT(database, 'experiments_membrane_composition', comp_data)
         if args.debug: print (" -- Linked lipid {} to experiment {}, {}".format(lipid_name, Exp_ID, lipid_data))
@@ -633,7 +620,7 @@ def load_experiment_composition(Exp_ID, README) -> None:
             'concentration': float(compound_data),
         }
         UPSERT(database, 'experiments_solution_composition', ion_comp_data)
-        if args.debug: print (" -- Linked ion {} to experiment {}, {}".format(compound_name, Exp_ID, compound_data))
+        if args.debug: print ("Linked ion {} to experiment {}, {}".format(compound_name, Exp_ID, compound_data))
 
 def load_experiment_properties(id, data) -> None:
     '''
@@ -710,31 +697,30 @@ if __name__ == '__main__':
         # Get the path to every README.yaml file with experimental data
         for path, _, files in os.walk(PATH_EXPERIMENTS_OP):
             for file in files:
-                if file.endswith("README.yaml"):
+                if file == "README.yaml":
                     EXP_OP.append(osp.relpath(path, PATH_EXPERIMENTS_OP))
+                    continue
 
         # Iterate over each experiment
         for expOP in EXP_OP:
-
             # Get the DOI of the experiment and the path to the README.yaml file
             with open(osp.join(PATH_EXPERIMENTS_OP, expOP, 'README.yaml')) as File:
                 README = yaml.load(File, Loader=yaml.FullLoader)
-            section_from_path = os.path.basename(os.path.normpath(expOP))
-            # check if section is numeric, skip if not
-            if not section_from_path.isdigit():
-                print(f"WARNING: Section '{section_from_path}' in experiment path '{expOP}' is not numeric. Skipping experiment.")
-                continue         
+            if not check_exp(expOP, README):
+                continue
+            section_from_path = os.path.basename(os.path.normpath(expOP))         
             ExpInfo = {
                 "article_doi": README.get("ARTICLE_DOI", README.get("DOI", ""))  ,
                 "data_doi": README.get("DATA_DOI", ""),
                 "section" : README.get("SECTION", section_from_path),
                 "type" : "OP",
-                "path": genRpath(osp.join(PATH_EXPERIMENTS_OP, expOP))}
+                "path": expOP
+            }
             # Entry in the DB with the LipidInfo of the experiment
             Exp_ID = UPSERT(database, 'experiments', ExpInfo)
             if args.debug: print ("Inserted experiment {} of type OP".format(Exp_ID))
             # Now add the membrane composition if available
-            load_experiment_composition(Exp_ID, README)
+            load_experiment_composition(Exp_ID, README, ExpInfo=ExpInfo)
             load_experiment_properties(Exp_ID, README)
  
     # -- TABLE `experiments_FF`
@@ -745,8 +731,9 @@ if __name__ == '__main__':
         # Get the path to every README.yaml file with experimental data
         for path, _, files in os.walk(PATH_EXPERIMENTS_FF):
             for file in files:
-                if file.endswith("README.yaml"):
+                if file == "README.yaml":
                     EXP_FF.append(osp.relpath(path, PATH_EXPERIMENTS_FF))
+                    continue
 
         # Iterate over each experiment
         for expFF in EXP_FF:
@@ -754,12 +741,7 @@ if __name__ == '__main__':
             with open(osp.join(PATH_EXPERIMENTS_FF, expFF, 'README.yaml')) as File:
                 README = yaml.load(File, Loader=yaml.FullLoader)
             section_from_path = os.path.basename(os.path.normpath(expFF))
-            if len(expFF.split('/')) != 3:
-                print(f"WARNING: Experiment path '{expFF}' does not follow expected structure. Skipping experiment.")
-                continue
-            # check if section is numeric, skip if not
-            if not section_from_path.isdigit():
-                print(f"WARNING: Section '{section_from_path}' in experiment path '{expFF}' is not numeric. Skipping experiment.")
+            if not check_exp(expFF, README):
                 continue
             exp_path_full = osp.join(PATH_EXPERIMENTS_FF, expFF)
             # Load form factor data file (assuming only one .json file per experiment)
@@ -785,7 +767,7 @@ if __name__ == '__main__':
             Exp_ID = UPSERT(database, 'experiments', ExpInfo)
             if args.debug: print ("Inserted experiment {} of type FF".format(Exp_ID))
             # Now add the membrane composition if available
-            load_experiment_composition(Exp_ID, README)
+            load_experiment_composition(Exp_ID, README, ExpInfo=ExpInfo)
             load_experiment_properties(Exp_ID, README)
 
 
@@ -902,8 +884,8 @@ if __name__ == '__main__':
                     Lipids[key] = README["COMPOSITION"][key]["COUNT"]
                     Lipids_ID[key] = Lip_ID
 
-    # --- TEMPORAL -----
-    # Must be chenged when the final structure is ready
+    # --- TEMPORARY -----
+    # Must be chenged when the final structure is ready (???)
     # If the LIPID_FragmentQuality.json file will be defined for every system
     # this part can be deleted and just read the quality (try at the end of this
     # part). At this moment the ranking is not necessary in the DB, the web
@@ -1366,7 +1348,7 @@ if __name__ == '__main__':
                                         exp_id = CheckEntry(
                                                     'experiments_OP', {
                                                       #"article_doi": path,
-                                                    "path": "experiments/OrderParameters/"+path})
+                                                    "path": path})
                                         if not exp_id:
                                             print("WARNING: Experiment not found in DB: " +
                                                   path + " for system: " +

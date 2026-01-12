@@ -5,16 +5,58 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\DB;
 
+
 class ExperimentController extends Controller
 {
+    // Function to format data for charting, returns formatted data and min/max values
+    private  static function formatData(string $jsonData, int $mult=1): array | null
+    {
+        $inputData = json_decode($jsonData, true);
+        $data = array();
+        $max = -INF;
+        $min = INF;
+        if ($mult == 0) {
+            $fact = 1;
+        } else {
+            $fact = $mult;
+        }
+        foreach ($inputData as $Values) {
+            if ($min > $Values[1]) {
+                $min = $Values[1];
+            }
+            if ($max < $Values[1]) {
+                $max = $Values[1];
+            }
 
-    public function list()
+            //$labelData = $labelData . "'" . $Values[0] . "',";
+            if ($mult == 0) {
+                $normal0 = $Values[0];
+            } else {
+                $normal0 = $Values[0] + 0.15;
+            }
+            $normal = $Values[1] * $fact;
+            //$data = $data . "'" . $normal . "',";
+            $d = array('x' => $normal0, 'y'=> $normal);
+
+            $data[]= $d;
+        }
+        $min = round($min - 0.5);
+        $max = round($max + 0.5);
+        $jsondata = str_replace('"',"",json_encode($data));
+        return array('data'=>$jsondata, 'min'=>$min, 'max'=>$max);
+    }
+
+
+
+
+
+    public function list(): \Illuminate\View\View
     {
         // Fetch all experiments
-        $experiments = DB::table('experiments')
-            ->select('experiments.id', 'article_doi', 'data_doi', 'section', 'type', 'path')
-            ->leftJoin('experiments_membrane_composition as emc', 'experiments.id', '=', 'emc.experiment_id')
-            ->groupBy('experiments.id')
+        $experiments = DB::table('experiments as e')
+            ->select('e.id', 'e.article_doi', 'e.data_doi', 'e.section', 'e.type', 'e.path')
+            ->leftJoin('experiments_membrane_composition as emc', 'e.id', '=', 'emc.experiment_id')
+            ->groupBy('e.id')
             ->orderBy('type', 'asc')
             ->orderBy('article_doi', 'asc')
             ->orderBy('section', 'asc')
@@ -28,7 +70,7 @@ class ExperimentController extends Controller
     }
 
 
-    public function show($type, $doi, $section)
+    public function show($type, $doi, $section): \Illuminate\View\View
     {
         // Fetch experiment by DOI, section, and type
         $experiment = DB::table('experiments')
@@ -64,13 +106,16 @@ class ExperimentController extends Controller
             ->where('esc.experiment_id', $experiment->id)
             ->select('esc.compound', 'esc.concentration',)
             ->get();    
-
+        $datFF = !empty($experiment->data) ? $this->formatData($experiment->data) : null;
         return View::make('experiment', [
                 'entity' => ['doi' => $experiment->article_doi,
                              'data_doi' => $experiment->data_doi,
                             'section' => $experiment->section, 
                             'path' => $experiment->path,
-                            'type' => $experiment->type,
+                            'type' => ($experiment->type),
+                            'data' => $datFF['data'] ?? null,
+                            'data_min' => $datFF['min'] ?? null,
+                            'data_max' => $datFF['max'] ?? null,
                             'membrane_composition' => $membraneComposition,
                             'solution_composition' => $solutionComposition,
                             ],
