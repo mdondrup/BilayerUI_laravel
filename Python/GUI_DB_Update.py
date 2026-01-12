@@ -596,7 +596,7 @@ def load_experiment_composition(Exp_ID, README, ExpInfo=None) -> None:
         if ExpInfo and ExpInfo.get('type') == 'OP':
             # For OP experiments, we store OP data from the json file
             # find the json file in the experiment path and store its contents in the DB
-            op_json_file = osp.join(PATH_EXPERIMENTS_OP, ExpInfo['path'],f"{lipid_name}_Order_Parameters.json")          
+            op_json_file = osp.join(PATH_EXPERIMENTS_OP, ExpInfo['path'],f"{lipid_name}_OrderParameters.json")          
             if not osp.exists(op_json_file):
                 print(f"WARNING: No order parameter JSON file found for lipid {lipid_name} in experiment path '{op_json_file}'", file=sys.stderr)
                 continue
@@ -1178,7 +1178,7 @@ if __name__ == '__main__':
                     OPExp = genRpath(osp.join(
                         PATH_EXPERIMENTS_OP,
                         list(README["EXPERIMENT"]["ORDERPARAMETER"][lipid].values())[0],
-                        lipid + '_Order_Parameters.json')
+                        lipid + '_OrderParameters.json')
                         )
                 except Exception:
                     OPExp = ''
@@ -1416,52 +1416,7 @@ if __name__ == '__main__':
 
             FAILS.append(README["path"])
 
-    # -- TABLE `trajectories` (again)
-    try:
-
-        # Generate a new cursor
-        with database.cursor() as cursor:
-
-            # Get the list of IDs currently in the DB
-            cursor.execute(SQL_Select("trajectories", ["id"]))
-            List_IDs = cursor.fetchall()
-
-            maxID = int(open(
-                osp.join(NMLDB_SIMU_PATH, "COUNTER_ID"), "r").readlines()[0])
-
-            missing_IDs = set(range(1, maxID+1)) - {ID[0] for ID in List_IDs}
-
-            trajectoryInfo = {
-                "id":              1,
-                "forcefield_id":   1,
-                "membrane_id":     1,
-                "git_path":        "''",
-                "system":          "''",
-                "author":          "''",
-                "date":            "''",
-                "doi":             "''",
-                "number_of_atoms": 0,
-                "preeq_time":      "''",
-                "publication":     "''",
-                "temperature":     0,
-                "software":        "''",
-                "trj_size":        0,
-                "trj_length":      0,
-                "timeleftout":     0
-                }
-
-            for missing_ID in missing_IDs:
-                if args.debug:
-                    print("Found missing trajectory ID:", missing_ID, file=sys.stderr)
-                trajectoryInfo["id"] = missing_ID
-
-                UPSERT(database, 'trajectories', trajectoryInfo)
-
-        database.commit()
-
-    except Exception as err:
-        print("Exception loading missing ID trajectory:" + str(missing_ID))
-        traceback.print_exc()
+    
 ####################
 
     if FAILS:
