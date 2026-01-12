@@ -50,6 +50,176 @@
 }
 </style>
 
+<script>
+function DrawFF(canvasId, data, labelsArray , step, chartType, title, labelX, labelY, border, radio, gridOn,
+        responsive, AutoSkiping, showLegend, xtype) {
+
+        var colorList = ['#ffffff', '#00ffff', '#ff00ff', '#0000ff', '#FFDAC1', '#E2F0CB', ];
+        var borderCol = 'rgb(255, 255, 255)';
+        var borderCol2 = 'rgb(70, 70, 70)';
+        var textCol = '#ffffff';
+
+        var ddd = [];
+        // we start from index 1 to avoid white color for first dataset
+        var indpos = 1;
+        data.forEach((itemArray, i) => {
+            console.log(indpos);
+          var d = {
+              label: labelsArray[indpos-1],
+              backgroundColor: colorList[indpos],
+              borderColor: colorList[indpos],
+              data: itemArray,
+              radius: radio,
+              borderWidth: border,
+              fill: false,
+              spanGaps: false,
+              showLines: true,
+              yAxisID: 'y-axis-1',
+          };
+          ddd.push(d);
+          indpos=indpos+1;
+
+
+        });
+
+        dataTop = {
+            labels: "",
+            datasets: ddd
+        };
+
+        var options = {
+
+            maintainAspectRatio: false,
+            responsive: responsive,
+            errorBarColor: {
+                v: ['#ff0000', '#ff0000']
+            },
+            errorBarWhiskerColor: '#ff0000',
+
+            plugins: {
+                title: {
+                    display: true,
+                    text: title,
+                    color: '#ffffff',
+
+                },
+                legend: {
+                    display: showLegend,
+                    position: 'top',
+                    labels: {
+                        display: true,
+                        color: 'rgb(255, 255, 255)'
+                    },
+                    title: {
+                        display: false,
+                        text: title,
+                        color: 'rgb(255, 255, 255)'
+                    },
+
+                },
+                tooltip: {
+
+                    callbacks: {
+                        title: (items) => {
+                            const item = items[0].parsed;
+                            //  console.log(item);
+                            if (item.yMax != null) {
+                                cad = items[0].label + ` : ` + item.y.toFixed(2) + ` max: ` + item.yMax
+                                    .toPrecision(2) + ` min: ` + item
+                                    .yMin.toPrecision(2);
+                            } else {
+                                cad = items[0].label + ` : ` + item.y.toFixed(2);
+                            }
+                            return cad;
+                            //return items[0].label+` : ` + items[0].parsed;
+                        },
+                        label: (items) => {
+                            return ``;
+                        },
+                    },
+                },
+            },
+            scales: {
+                x: {
+                    //offset: true,
+                    //type: 'linear',
+                    grid: {
+                        display: gridOn,
+                        drawBorder: gridOn,
+                        drawOnChartArea: gridOn,
+                        drawTicks: gridOn,
+                        color: '#74C3D8'
+                    },
+                    display: true,
+                    title: {
+                        display: true,
+                        text: labelX,
+                        color: '#ffffff'
+                    },
+                    ticks: {
+                        display: gridOn,
+                        autoSkip: AutoSkiping,
+                        stepSize: step,
+                        beginAtZero: false,
+                        color: '#eeeeee'
+                    },
+                },
+                
+                'y-axis-1': {
+                    type: 'linear',
+
+                    position: 'left',
+                      beginAtZero: true,
+                    grid: {
+                       display: gridOn,
+                        drawBorder: gridOn,
+                        drawOnChartArea: gridOn,
+                        drawTicks: gridOn,
+                        color: '#00ffff',
+                        drawOnChartArea: true, // Dibujamos la linea horizontal del grid
+                    },
+                    display: true,
+                    title: {
+                        display: true,
+                        text: labelY + " experiment",
+                        color: '#ffffff'
+                    },
+                    ticks: {
+
+                        display: gridOn,
+                        color: '#eeeeee'
+                    },
+                }
+            }
+
+        };
+
+        var config1 = {
+            type: chartType,
+            data: dataTop,
+            options: options,
+        };
+
+        if (xtype != '') {
+            config1.options.scales.x.type = xtype;
+        }
+        //config1.options.scales.y.type = 'linear';
+
+        var ctx1 = document.getElementById(canvasId);
+
+        var myChart1 = new Chart(ctx1, config1);
+
+        var size = '90%';
+        if (myChart1.canvas) {
+            myChart1.canvas.parentNode.style.width = size;
+            myChart1.canvas.parentNode.style.height = size / 2;
+        }
+    }
+
+
+</script>
+
+
 <body id="page-top">
     <!-- Navigation-->
      <main>
@@ -81,7 +251,8 @@
             <div class="row gx-4 gx-lg-5 justify-content-center">
                 <div class="col-lg-10">
                     <hr class="divider divider-light" />
-                    <h3 class="text-white text-center mt-0">@if (! empty($experiments_list)) Experiments @else {{ $entity['type'] }} Experiment @endif</h3>
+                    <h3 class="text-white text-center mt-0">
+                        @if (! empty($experiments_list)) Experiments @else {{ $entity['type'] }} Experiment @endif</h3>
                     <?php 
                         $experiments_list = $experiments_list ?? [];
                         $entity = $entity ?? [];
@@ -288,24 +459,64 @@
                         <!-- Analysis Tab -->
                         <div class="tab-pane fade" id="analysis" role="tabpanel" aria-labelledby="analysis-tab">
                             <br/>
-                            <p class="text-white">Analysis features are coming soon. Stay tuned!</p>
+                            
+                            @if ($entity['type'] === 'OP')
+                            <p class="text-white">Analysis features for OP are coming soon. Stay tuned!</p>
+
                             <h5 class="text-white">Membrane Composition</h5>
                             <table class="table table-bordered table-striped table-sm table-dark">
-                                                    <thead>
-                                                        <tr>
-                                                            <th scope="col">Lipid</th>
-                                                            <th scope="col">PATH</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                             @foreach ( $entity['membrane_composition'] as $component )
-                                                    <tr>
-                                                        <td><a href="/lipid/{{ $component->id }}"> {{ $component->molecule }}</a></td>
-                                                        <td>{{ $entity['path'] }}</td>
-                                                    </tr>
-                                                @endforeach
-                                                    </tbody>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Lipid</th>
+                                        <th scope="col">PATH</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+
+                                @foreach ( $entity['membrane_composition'] as $component )
+                                    <tr>
+                                        <td><a href="/lipid/{{ $component->id }}"> {{ $component->molecule }}</a></td>
+                                        <td>{{ $entity['path'] }}</td>
+                                    </tr>
+                                @endforeach
+
+                                </tbody>
                             </table>
+                           
+                            @elseif  ($entity['type'] == 'FF' && ! empty( $entity['data'] ) )
+                            <div class="row p-2">
+                                <div class="col-sm-12 col-md-12 chart-container-half">
+                                    <canvas id="myChartFormFactEXP"> </canvas>
+                                    <?php
+                                        $dataFF = $entity['data'];
+                                        echo "<script>\n";
+                                        echo "var dataFF = [" . $dataFF . "];\r\n";
+                                        echo "var label = [\"". $entity['doi'] . "\"];\r\n";
+                                        echo 'DrawFF(
+                                                "myChartFormFactEXP",
+                                                
+                                                dataFF,
+                                                
+                                                label,
+                                                0.01,
+                                                "line",
+                                                "Form factor",
+                                                "Qz (\u{212B}\u{207B}\u{00B9})",
+                                                "  |F(Qz)|  ",
+                                                1,
+                                                0,
+                                                true,
+                                                true,
+                                                true,
+                                                true,
+                                                "linear"
+                                                );' . "\r\n";
+                                        echo "</script>\r\n";
+                                    ?>
+                                </div>
+                            </div>
+
+                            @endif
 
                         </div>
                     </div>
@@ -316,6 +527,9 @@
     </header>
     </main>
     @include('layouts.foot')
+
+
+
 
     <!-- Bootstrap core JS--><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <!-- Core theme JS-->
