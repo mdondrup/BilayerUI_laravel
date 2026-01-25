@@ -596,10 +596,12 @@ def load_experiment_composition(Exp_ID, README, ExpInfo=None) -> None:
         if ExpInfo and ExpInfo.get('type') == 'OP':
             # For OP experiments, we store OP data from the json file
             # find the json file in the experiment path and store its contents in the DB
-            op_json_file = osp.join(PATH_EXPERIMENTS_OP, ExpInfo['path'],f"{lipid_name}_OrderParameters.json")          
-            if not osp.exists(op_json_file):
-                print(f"WARNING: No order parameter JSON file found for lipid {lipid_name} in experiment path '{op_json_file}'", file=sys.stderr)
+            op_path = osp.join(PATH_EXPERIMENTS_OP, ExpInfo['path'],f"{lipid_name}_Order[_]*Parameters.json")
+            files = glob.glob(op_path)
+            if not files:
+                print(f"WARNING: No order parameter JSON file found for lipid {lipid_name} in experiment path '{op_path}'", file=sys.stderr)
                 continue
+            op_json_file = files.pop()
             if args.debug: print(f"Loading order parameter data from {op_json_file} for lipid {lipid_name}")
             with open(op_json_file, 'r') as f:
                 op_data = json.load(f)

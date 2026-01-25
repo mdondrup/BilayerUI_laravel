@@ -264,11 +264,11 @@ function DrawFF(canvasId, data, labelsArray , step, chartType, title, labelX, la
                             <thead>
                                 <tr>
                                     <th scope="col">ID</th>
-                                    <th scope="col">DOI</th>
+                                    <th scope="col">Article DOI</th>
                                     <th scope="col">Data DOI</th>
                                     <th scope="col">Type</th>
                                     <th scope="col">Section</th>
-                                    <th scope="col">Number of lipids</th>
+                                    <th scope="col"># types of lipids</th>
                                     <th scope="col">Actions</th>
                                 </tr>
                             </thead>
@@ -302,7 +302,7 @@ function DrawFF(canvasId, data, labelsArray , step, chartType, title, labelX, la
                             <button class="nav-link" id="properties-tab" data-bs-toggle="tab"     data-bs-target="#properties" type="button" role="tab">Properties</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button" role="tab">Analysis (coming soon)</button>
+                            <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button" role="tab">Data</button>
                         </li>
                     </ul>
                     <!-- Tab Contents -->
@@ -313,40 +313,30 @@ function DrawFF(canvasId, data, labelsArray , step, chartType, title, labelX, la
                                 <table class="table table-bordered table-striped table-sm table-dark">
                                     <tbody>
                                         <tr>
-                                            <th scope="row">DOI</th>
+                                            <th scope="row">Article DOI</th>
                                             <td>{{ $entity['doi'] }}</td>
                                         </tr>
                                         <tr>
                                             <th scope="row">Data DOI</th>
                                             <td>{{ $entity['data_doi'] }}</td>
                                         </tr>
+                                       
                                         <tr>
-                                            <th scope="row">Type</th>
-                                            <td>{{ $entity['type'] }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th scope="row">Path</th>
+                                            <th scope="row">Internal ID</th>
                                             <td>{{ $entity['path'] }}</td>
                                         </tr>
+                                       
                                         <tr>
-                                            <th scope="row">Section</th>
-                                            <td>{{ $entity['section'] }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th scope="row">Membrane composition</th>
+                                            <th scope="row">Membrane composition (molar fraction)</th>
 
                                             <td>
-                                            <table class="table table-striped table-sm ">
-                                                <thead>
-                                                    <tr>
-                                                        <th scope="col">Lipid</th>
-                                                        <th scope="col">Molar Fraction</th>
-                                                    </tr>
-                                                </thead>
+                                            <table class="table">
+                                                
                                                 <tbody>
                                                 @foreach ( $entity['membrane_composition'] as $component )
                                                     <tr>
-                                                        <td><a href="/lipid/{{ $component->id }}"> {{ $component->name }}</a></td>
+                                                        <td><a href="/lipid/{{ $component->id }}"> {{ $component->molecule }}</a></td>
+                                                        <td>{{ $component->name  }} </td>
                                                         <td>{{ $component->mol_fraction }}</td>
                                                     </tr>
                                                 @endforeach
@@ -357,28 +347,133 @@ function DrawFF(canvasId, data, labelsArray , step, chartType, title, labelX, la
                                         <tr>
                                             <th scope="row">Solution composition</th>
                                             <td>
-                                            <table class="table table-striped table-sm ">
-                                                <thead>
-                                                    <tr>
-                                                        <th scope="col">Compound</th>
-                                                        <th scope="col">Mass %</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                @foreach ( $entity['solution_composition'] as $component )
-                                                    <tr>
-                                                        <td> {{ $component->compound }}</td>
-                                                        <td>{{ $component->concentration }}</td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
+                                                @if ( empty( $entity['solution_composition'] ) )
+                                                    No data available                                               
+                                                @elseif ($entity['solution_composition'] == 'pure water' )
+                                                    Pure water
+
+                                                @else
+                                                    <table class="table table-striped table-sm ">
+                                                        <thead>
+                                                            <tr>
+                                                                <th scope="col">Compound</th>
+                                                                <th scope="col">Mass %</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                        @foreach ( $entity['solution_composition'] as $component )
+                                                        @if($component->concentration > 0)
+                                                            <tr>
+                                                                <td> {{ $component->compound }}</td>
+                                                                <td>{{ $component->concentration }}</td>
+                                                            </tr>
+                                                        @endif    
+                                                        @endforeach
+                                                    </tbody>
                                             </table>  
+                                            @endif
                                             </td>
-                                        </tr>    
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">Temperature (K)</th>
+                                            <td>{{ $properties['TEMPERATURE']->value ?? 'N/A' }} </td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">Total hydration</th>
+                                            <td>{{ $properties['TOTAL_HYDRATION']->value ?? 'N/A' }} (mass %) </td>
+                                        </tr>   
+                                        <tr>
+                                            <th scope="row">pH</th>
+                                            <td>{{ $properties['PH']->value ?? 'N/A' }}</td>
+                                        </tr> 
+                                        <tr>
+                                            <th scope="row">Reagent sources</th>
+                                            @php
+                                                $decoded_value = $properties['REAGENT_SOURCES']->value;
+                                            @endphp
+                                            <td>
+                                            <table class="table table-striped table-sm table-dark">
+                                                        <tbody>
+                                                            @foreach ($decoded_value as $key => $value)
+                                                            <tr>
+                                                                <td>{{ $key }}</td>
+                                                                <td>{{ is_array($value) ? json_encode($value) : $value }}</td>
+                                                            </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </td>        
+                                        </tr>
+                                        <tr>
+                                        <th scope="row" >Sample protocol</th>
+                                            <td>{{ $properties['SAMPLE_PROTOCOL']->value ?? 'N/A' }}</td> 
+                                        </tr>
+                                        @if ($properties['XRAY'] ?? false)
+                                            <!-- tr>
+                                                <th scope="row" colspan="2">X-ray properties</th>
+                                            </tr -->
+                                             <tr>
+                                                <th scope="row">X-ray detector</th>
+                                                <td>{{ $properties['XRAY']->value['DETECTOR'] ?? 'N/A' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">X-ray source</th>
+                                                <td>{{ $properties['XRAY']->value['SOURCE'] ?? 'N/A' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">X-ray wavelength (nm)</th>
+                                                <td>{{ $properties['XRAY']->value['LAMBDA'] ?? 'N/A' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">X-ray beam size (mm)</th>
+                                                <td>{{ $properties['XRAY']->value['BEAMSIZE'] ?? 'N/A' }}</td>
+                                            </tr>
+                                           
+                                            <tr>
+                                                <th scope="row">X-ray distance to sample (m)</th>
+                                                <td>{{ $properties['XRAY']->value['DISTANCE'] ?? 'N/A' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">X-ray data type</th>
+                                                <td>{{ $properties['XRAY']->value['DATATYPE'] ?? 'N/A' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">X-ray exposure time (s)</th>
+                                                <td>{{ $properties['XRAY']->value['EXPOSURE'] ?? 'N/A' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">X-ray number of frames</th>
+                                                <td>{{ $properties['XRAY']->value['FRAMES'] ?? 'N/A' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">X-ray sample type</th>
+                                                <td>{{ $properties['XRAY']->value['SAMPLE_TYPE'] ?? 'N/A' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th scope="row">X-ray Q-range (Å⁻¹)</th>
+                                                <td>{{ $properties['XRAY']->value['QRANGE'] ?? 'N/A' }}</td>
+                                            </tr>
+
+                                       
+                                        @endif
                                     </tbody>
                                 </table>
                         </div>
                         <!-- Properties Tab -->
+                        @php
+                            unset($properties['TEMPERATURE']);
+                            unset($properties['TOTAL_HYDRATION']);
+                            unset($properties['PH']);
+                            unset($properties['REAGENT_SOURCES']);
+                            unset($properties['SAMPLE_PROTOCOL']);
+                            unset($properties['TOTAL_LIPID_CONCENTRATION']);
+                            unset($properties['COUNTER_IONS']);
+                            unset($properties['XRAY']);
+
+                        @endphp
+                          
+
+                        
                         <div class="tab-pane fade" id="properties" role="tabpanel" aria-labelledby="properties-tab">
                             <br/>
                             <table class="table table-bordered table-striped table-sm table-dark">
@@ -387,8 +482,7 @@ function DrawFF(canvasId, data, labelsArray , step, chartType, title, labelX, la
                                         <th scope="col">Name</th>
                                         <!-- th scope="col">Description</th -->
                                         <th scope="col">Value</th>
-                                        <th scope="col">Unit</th>
-                                        <th scope="col">Type</th>
+                                        
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -449,8 +543,7 @@ function DrawFF(canvasId, data, labelsArray , step, chartType, title, labelX, la
                                             {{ $prop->value }}
                                             @endif
                                         </td>
-                                        <td>{{ $prop->unit }}</td>
-                                        <td>{{ $prop->type }}</td>
+                                      
                                     </tr>
                                     @endforeach
                                 </tbody>
@@ -468,7 +561,7 @@ function DrawFF(canvasId, data, labelsArray , step, chartType, title, labelX, la
                                 <thead>
                                     <tr>
                                         <th scope="col">Lipid</th>
-                                        <th scope="col">PATH</th>
+                                        <th scope="col">OP data</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -476,7 +569,7 @@ function DrawFF(canvasId, data, labelsArray , step, chartType, title, labelX, la
                                 @foreach ( $entity['membrane_composition'] as $component )
                                     <tr>
                                         <td><a href="/lipid/{{ $component->id }}"> {{ $component->molecule }}</a></td>
-                                        <td>{{ $entity['path'] }}</td>
+                                        <td><input type="text" value="{{ $component->data }}" readonly style="width: 100%;"></td>
                                     </tr>
                                 @endforeach
 
