@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\DB;
 
@@ -9,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 class ExperimentController extends Controller
 {
     // Function to format data for charting, returns formatted data and min/max values
-    private  static function formatData(string $jsonData, int $mult=1): array | null
+    private  static function formatFFData(string $jsonData, int $mult=1): array | null
     {
         $inputData = json_decode($jsonData, true);
         $data = array();
@@ -44,6 +45,82 @@ class ExperimentController extends Controller
         $max = round($max + 0.5);
         $jsondata = str_replace('"',"",json_encode($data));
         return array('data'=>$jsondata, 'min'=>$min, 'max'=>$max);
+    }
+
+    private static function formatOPData (string $jsonData, string $group): array | null
+    {
+
+        $jsonData = str_replace('NaN', 0.0, $jsonData);
+
+        $jsonDataData = [];
+
+        $jsonData = str_replace('_M M_', '_', $jsonData);
+        $jsonData = str_replace('_M', '', $jsonData);
+        $jsonData = str_replace('M_', '', $jsonData);
+
+        $jsonDataData = json_decode($jsonData, true);
+
+        $labelData = array();
+        $data = array();
+        $dataerror = array();
+        $maxData = -INF;
+        $minData = INF;
+
+        if (is_array($jsonDataData) || is_object($jsonDataData)) {
+
+            foreach ($jsonDataData as $label => $Values) {
+
+                if (is_array($Values)) {
+
+                    if (is_numeric($Values[0][0])) {
+
+                        if ($group == '') {
+                          //echo("D");
+                            $labelData[] =  CleanLabel($label);
+
+                            $data[] = $Values[0][0];
+
+                            $dataerror = $dataerror . '{y:' . $Values[0][0] . '},';
+
+                        } else {
+
+                            $labelCleaned = CleanLabel($label);
+
+                            if (str_contains($label, $group)) {
+
+                                if ($labelCleaned == 'G1H1' || $labelCleaned == 'G1H2' || $labelCleaned == 'G2H1') {
+                                    // HACK THIS LABEL IS GONNA GOT TO HEAD GROUP
+                                } else {
+
+                                    $labelData[] = CleanLabel($label);
+
+                                    $data[]= $Values[0][0];
+
+                                    $dataerror[] = $Values[0][0];
+
+                                 }
+                            } else {
+
+                                if ($labelCleaned == 'G1H1' || $labelCleaned == 'G1H2' || $labelCleaned == 'G2H1') {
+                                  if($group == 'G3') {
+                                        $labelData[] = $labelCleaned;
+
+                                        $data[] = $Values[0][0];
+
+                                        $dataerror[] = $Values[0][0];
+
+
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+      }
+
+
+        return [$jsonData];
     }
 
 
@@ -90,23 +167,48 @@ class ExperimentController extends Controller
             ->select('ep.name', 'ep.value', 'ep.unit', 'ep.type', 'ep.description')
             ->get();
         // convert properties with type 'array' or 'dict' from JSON strings to PHP arrays
+        $assocProps = [];
         foreach ($properties as $prop) {
             if ($prop->type === 'array' || $prop->type === 'dict') {
                 $prop->value = json_decode($prop->value, true);
             }
+            $assocProps[$prop->name] = $prop;
         }
         // Fetch membrane composition property if exists
         $membraneComposition = DB::table('experiments_membrane_composition as emc')
             ->join('lipids as l', 'emc.lipid_id', '=', 'l.id')
             ->where('emc.experiment_id', $experiment->id)
-            ->select('l.id','l.name','l.molecule', 'emc.mol_fraction')
+            ->select('l.id','l.name','l.molecule', 'emc.mol_fraction', 'emc.data')
             ->get();
         // Fetch solution composition property if exists
         $solutionComposition = DB::table('experiments_solution_composition as esc')
             ->where('esc.experiment_id', $experiment->id)
-            ->select('esc.compound', 'esc.concentration',)
+            ->select('esc.compound', 'esc.concentration','data')
             ->get();    
-        $datFF = !empty($experiment->data) ? $this->formatData($experiment->data) : null;
+        if (empty($membraneComposition)) {
+            $membraneComposition = null;
+        }
+        
+        if (empty($solutionComposition)) {
+            $solutionComposition = null;
+        } else {
+            $pureWater = true;
+            foreach ($solutionComposition as $index => $solComp) {
+                if (is_numeric($solComp->concentration)) {
+                    $solutionComposition[$index]->concentration = floatval($solComp->concentration);
+                }
+                if (strtolower($solComp->compound) != 'water' && strtolower($solComp->compound) != 'sol' && $solComp->concentration > 0) {
+                    $pureWater = false;
+                }
+            }
+            if ($pureWater) {
+                $solutionComposition = 'pure water';
+            }
+        }            
+
+        
+        $datFF =  ($experiment->type === 'FF' && !empty($experiment->data)) ? $this->formatFFData($experiment->data) : null;
+
         return View::make('experiment', [
                 'entity' => ['doi' => $experiment->article_doi,
                              'data_doi' => $experiment->data_doi,
@@ -119,7 +221,7 @@ class ExperimentController extends Controller
                             'membrane_composition' => $membraneComposition,
                             'solution_composition' => $solutionComposition,
                             ],
-                'properties' => $properties,
+                'properties' => $assocProps,
         ]);
     }
 }
