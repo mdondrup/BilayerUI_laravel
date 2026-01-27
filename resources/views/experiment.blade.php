@@ -51,7 +51,55 @@
 </style>
 
 <script>
-function DrawFF(canvasId, data, labelsArray , step, chartType, title, labelX, labelY, border, radio, gridOn,
+
+function OPPlot(canvasId, dataValues, labels, legendText) {
+    var ctx = document.getElementById(canvasId).getContext('2d');
+    var myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: legendText,
+                data: dataValues,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                fill: false,
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#ffffff' 
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#ffffff' 
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: '#ffffff' 
+                }
+            }
+        }
+     }
+    });
+
+    var size = '90%';
+    if (myChart.canvas) {
+        myChart.canvas.parentNode.style.width = size;
+    }
+}
+
+
+
+function DrawPlot(canvasId, data, labelsArray , step, chartType, title, labelX, labelY, border, radio, gridOn,
         responsive, AutoSkiping, showLegend, xtype) {
 
         var colorList = ['#ffffff', '#00ffff', '#ff00ff', '#0000ff', '#FFDAC1', '#E2F0CB', ];
@@ -299,10 +347,10 @@ function DrawFF(canvasId, data, labelsArray , step, chartType, title, labelX, la
                             <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">Overview</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="properties-tab" data-bs-toggle="tab"     data-bs-target="#properties" type="button" role="tab">Properties</button>
+                            <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button" role="tab">Data</button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button" role="tab">Data</button>
+                            <button class="nav-link" id="properties-tab" data-bs-toggle="tab"  data-bs-target="#properties" type="button" role="tab">Properties</button>
                         </li>
                     </ul>
                     <!-- Tab Contents -->
@@ -389,7 +437,7 @@ function DrawFF(canvasId, data, labelsArray , step, chartType, title, labelX, la
                                         <tr>
                                             <th scope="row">Reagent sources</th>
                                             @php
-                                                $decoded_value = $properties['REAGENT_SOURCES']->value;
+                                                $decoded_value = $properties['REAGENT_SOURCES']->value ?? [];
                                             @endphp
                                             <td>
                                             <table class="table table-striped table-sm table-dark">
@@ -472,7 +520,7 @@ function DrawFF(canvasId, data, labelsArray , step, chartType, title, labelX, la
 
                         @endphp
                           
-
+                        @if (count($properties) > 0)
                         
                         <div class="tab-pane fade" id="properties" role="tabpanel" aria-labelledby="properties-tab">
                             <br/>
@@ -549,14 +597,18 @@ function DrawFF(canvasId, data, labelsArray , step, chartType, title, labelX, la
                                 </tbody>
                             </table>
                         </div>
+                        @else
+                            <!-- Hide the properties tab if there are no properties to show -->
+                        @php
+                            echo "<style>\n";
+                            echo "#properties-tab { display: none; }\n";
+                            echo "</style>\n";
+                        @endphp
+                        @endif
                         <!-- Analysis Tab -->
                         <div class="tab-pane fade" id="analysis" role="tabpanel" aria-labelledby="analysis-tab">
-                            <br/>
                             
                             @if ($entity['type'] === 'OP')
-                            <p class="text-white">Analysis features for OP are coming soon. Stay tuned!</p>
-
-                            <h5 class="text-white">Membrane Composition</h5>
                             <table class="table table-bordered table-striped table-sm table-dark">
                                 <thead>
                                     <tr>
@@ -569,7 +621,44 @@ function DrawFF(canvasId, data, labelsArray , step, chartType, title, labelX, la
                                 @foreach ( $entity['membrane_composition'] as $component )
                                     <tr>
                                         <td><a href="/lipid/{{ $component->id }}"> {{ $component->molecule }}</a></td>
-                                        <td><input type="text" value="{{ $component->data }}" readonly style="width: 100%;"></td>
+                                        <td>
+                                            @if ( isset( $component->data ) )
+                                                <table class="table table-striped table-sm table-dark">
+                                                    
+                                                    <tbody>
+                                                        @foreach ( $component->data as $key => $data )
+                                                        @if ( empty( $data ) )
+                                                        <tr> <td colspan="2">
+                                                        <p> No OP {{ $key }} data available for this lipid. </p> 
+                                                         @php continue; @endphp
+                                                        </td></tr> 
+                                                        @endif
+                                                        <tr>
+                                                            <td>
+                                                                <div class="chart-container-half">
+                                                                    <canvas id="myChartOP{{ $component->id }}{{ $key }}"> </canvas>
+                                                                </div>
+                                                                <?php
+                                                                    $data_values = json_encode($data);
+                                                                    echo "<script>\n";
+                                                                    echo "var dataOP = " . $data_values . ";\r\n";
+                                                                    echo "var labels = " . json_encode(array_keys($data)) . ";\r\n";
+                                                                    echo "var label = [\"". $entity['doi'] . " - " . $component->molecule . "\"];\r\n";
+                                                                    echo 'OPPlot("myChartOP' . $component->id . $key . '", dataOP, labels, label);' . "\r\n";
+                                                                    echo "</script>\r\n";
+                                                                    //echo '<textarea rows="10" cols="100" id="dataOP' . $component->id . $key . '" value="' . $data_values . '">    ' . $data_values . '</textarea>';
+                                                            ?>
+                                                            </td>
+                                                                                                                  
+                                                        </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>  
+                                            @else
+                                                No OP data available for this lipid.
+                                            @endif
+                                        </td>  
+                                      
                                     </tr>
                                 @endforeach
 
@@ -585,7 +674,7 @@ function DrawFF(canvasId, data, labelsArray , step, chartType, title, labelX, la
                                         echo "<script>\n";
                                         echo "var dataFF = [" . $dataFF . "];\r\n";
                                         echo "var label = [\"". $entity['doi'] . "\"];\r\n";
-                                        echo 'DrawFF(
+                                        echo 'DrawPlot(
                                                 "myChartFormFactEXP",
                                                 
                                                 dataFF,
