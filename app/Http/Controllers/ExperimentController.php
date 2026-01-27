@@ -9,6 +9,117 @@ use Illuminate\Support\Facades\DB;
 
 class ExperimentController extends Controller
 {
+
+    /**
+     * Extract numerical components from a key for sorting
+     * 
+     * Extracts all numbers from the key in order of occurrence.
+     * Example: "G1C3H1" → [1, 3, 1], "C3H2" → [3, 2]
+     * 
+     * @param string $key The key to parse
+     * @return array Array of numbers in order of occurrence
+     */
+    public static function extractNumericComponents($key) {
+        $numbers = [];
+        preg_match_all('/\d+/', $key, $matches);
+        
+        if (!empty($matches[0])) {
+            $numbers = array_map('intval', $matches[0]);
+        }
+        
+        return $numbers;
+    }
+    /**
+     * Sorting callback for comparing keys by their numeric components
+     * 
+     * Compares two keys by extracting their numeric components.
+     * Missing components are treated as 0.
+     * 
+     * @param string $a First key
+     * @param string $b Second key
+     * @return int Comparison result for usort
+     */
+    public static function compareNumericComponents($a, $b) {
+        $componentsA = self::extractNumericComponents($a);
+        $componentsB = self::extractNumericComponents($b);
+
+        // Pad shorter array with 0s for comparison
+        $maxLen = max(count($componentsA), count($componentsB));
+        $componentsA = array_pad($componentsA, $maxLen, 0);
+        $componentsB = array_pad($componentsB, $maxLen, 0);
+
+        // Compare arrays element by element
+        for ($i = 0; $i < $maxLen; $i++) {
+            if ($componentsA[$i] < $componentsB[$i]) {
+                return -1;
+            } elseif ($componentsA[$i] > $componentsB[$i]) {
+                return 1;
+            }
+        }
+
+        return 0;
+    }
+
+/**
+ * Transform the plot data keys and split by G1, G2, G3 components
+ * 
+ * For each key:
+ * 1. Split on space and use the second part
+ * 2. Remove leading "M_" and trailing "_M"
+ * 3. Categorize into G1, G2, or G3 arrays based on the key prefix
+ * 4. Sort keys within each category by their numerical components
+ * 
+ * @param array $data The plot data array
+ * @return array An associative array with 'G1', 'G2', 'G3' keys, each containing sorted filtered data
+ */
+function formatOPData($data) {
+    $result = [
+        'G1' => [],
+        'G2' => [],
+        'G3' => []
+    ];
+    
+    foreach ($data as $key => $value) {
+        // Split the key on space and get the second part
+        $parts = explode(' ', $key);
+        
+        if (count($parts) < 2) {
+            // If there's no space, use the original key
+            $newKey = $key;
+        } else {
+            $newKey = $parts[1];
+        }
+        
+        // Remove leading "M_"
+        if (strpos($newKey, 'M_') === 0) {
+            $newKey = substr($newKey, 2);
+        }
+        
+        // Remove trailing "_M"
+        if (substr($newKey, -2) === '_M') {
+            $newKey = substr($newKey, 0, -2);
+        }
+        
+        // Categorize by G1, G2, or G3
+        if (strpos($newKey, 'G1') === 0) {
+            $result['G1'][$newKey] = $value[0][0];
+        } elseif (strpos($newKey, 'G2') === 0) {
+            $result['G2'][$newKey] = $value[0][0];
+        } elseif (strpos($newKey, 'G3') === 0) {
+            $result['G3'][$newKey] = $value[0][0];
+        }
+    }
+    
+    // Sort each category by numeric components
+    foreach ($result as $category => &$array) {
+        uksort($array, [self::class, 'compareNumericComponents']);
+    }
+    
+    return $result;
+}
+
+
+
     // Function to format data for charting, returns formatted data and min/max values
     private  static function formatFFData(string $jsonData, int $mult=1): array | null
     {
@@ -47,81 +158,8 @@ class ExperimentController extends Controller
         return array('data'=>$jsondata, 'min'=>$min, 'max'=>$max);
     }
 
-    private static function formatOPData (string $jsonData, string $group): array | null
-    {
 
-        $jsonData = str_replace('NaN', 0.0, $jsonData);
-
-        $jsonDataData = [];
-
-        $jsonData = str_replace('_M M_', '_', $jsonData);
-        $jsonData = str_replace('_M', '', $jsonData);
-        $jsonData = str_replace('M_', '', $jsonData);
-
-        $jsonDataData = json_decode($jsonData, true);
-
-        $labelData = array();
-        $data = array();
-        $dataerror = array();
-        $maxData = -INF;
-        $minData = INF;
-
-        if (is_array($jsonDataData) || is_object($jsonDataData)) {
-
-            foreach ($jsonDataData as $label => $Values) {
-
-                if (is_array($Values)) {
-
-                    if (is_numeric($Values[0][0])) {
-
-                        if ($group == '') {
-                          //echo("D");
-                            $labelData[] =  CleanLabel($label);
-
-                            $data[] = $Values[0][0];
-
-                            $dataerror = $dataerror . '{y:' . $Values[0][0] . '},';
-
-                        } else {
-
-                            $labelCleaned = CleanLabel($label);
-
-                            if (str_contains($label, $group)) {
-
-                                if ($labelCleaned == 'G1H1' || $labelCleaned == 'G1H2' || $labelCleaned == 'G2H1') {
-                                    // HACK THIS LABEL IS GONNA GOT TO HEAD GROUP
-                                } else {
-
-                                    $labelData[] = CleanLabel($label);
-
-                                    $data[]= $Values[0][0];
-
-                                    $dataerror[] = $Values[0][0];
-
-                                 }
-                            } else {
-
-                                if ($labelCleaned == 'G1H1' || $labelCleaned == 'G1H2' || $labelCleaned == 'G2H1') {
-                                  if($group == 'G3') {
-                                        $labelData[] = $labelCleaned;
-
-                                        $data[] = $Values[0][0];
-
-                                        $dataerror[] = $Values[0][0];
-
-
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-      }
-
-
-        return [$jsonData];
-    }
+   
 
 
 
@@ -187,6 +225,14 @@ class ExperimentController extends Controller
             ->get();    
         if (empty($membraneComposition)) {
             $membraneComposition = null;
+        } else {
+            foreach ($membraneComposition as $index => $memComp) {
+                if (!empty($memComp->data)) {
+                    $formattedData = $this->formatOPData(json_decode($memComp->data, true) ?? []);
+                    $membraneComposition[$index]->data = $formattedData;
+                } else {
+                    $membraneComposition[$index]->data = null;
+            }
         }
         
         if (empty($solutionComposition)) {
@@ -224,4 +270,5 @@ class ExperimentController extends Controller
                 'properties' => $assocProps,
         ]);
     }
+}
 }
