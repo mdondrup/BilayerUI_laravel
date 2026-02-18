@@ -42,8 +42,8 @@ NMRLipids Databank -- A portal for visualization of molecular simulations
 * Create a customized ``` .env ``` file
 * start Docker
 * Follow the instructions to install and run Sail here https://laravel.com/docs/12.x/sail
-  * ``` composer require laravel/sail --dev ``` --de
-  * ``` php artisan sail:install --devcontainer ``` 
+  * ``` composer require laravel/sail --dev ``` --dev is optional
+  * ``` php artisan sail:install --devcontainer ``` (The dev-container can be used by your IDE)
 * ``` ./vendor/bin/sail up ``` to start the container
 * commands to the Docker instance can be issued using sail e.g.
 ```
@@ -56,3 +56,29 @@ NMRLipids Databank -- A portal for visualization of molecular simulations
 *  ``` /vendor/bin/sail npm run dev ``` set up the Vite server
 * The web server will by default be accessible at http://localhost:80
 
+### Populating the database
+
+* The database can be populated using the [FAIRMD Python Modules](https://github.com/NMRLipids/FAIRMD_lipids.git)
+* Install and set up the Python module and the [BilayerData](https://github.com/NMRLipids/BilayerData)
+* Set up the environment pointing to a folder containing the BilayerData to display
+* ``` cd BilayerUI_laravel/Python ```
+* Set up a config.json file with your DB connection details:
+
+  ```
+   {
+      "host": "127.0.0.1",
+      "port": 3306,
+      "user": "laravel",
+      "password": "your_db_password",
+      "database": "laravel"  
+   }
+  ```
+  
+* Import Data:
+
+  ```
+  artisan migrate:fresh # prefix ../vendor/bin/sail if running via sail 
+  ./UI_DB_Update.py -c config.json
+  ```
+ * Check the output for any error messages.
+ * All data required for display are now stored in the DB and you can delete the BilayerData if you do not need them
