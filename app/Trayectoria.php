@@ -5,8 +5,6 @@ namespace App;
 use App\Lib\Coleccion;
 use App\TrayectoriaAnalisisLipidos;
 
-use App\RankingHeteromolecules;
-use App\RankingLipids;
 
 /**
  * Class Trayectoria
@@ -34,34 +32,26 @@ class Trayectoria extends AppModel
         return 'trajectory_id';
     }
 
-    function ranking_global() {
-      //$ranking_global = $this->belongsToMany(Lipido::class, TrayectoriasLipidos::getTableName())->withPivot('leaflet_1', 'leaflet_2');
-      //DB::enableQueryLog();
-      $ranking_global =$this->hasOne(RankingGlobal::class);
-      //dd(DB::getQueryLog());
-      return $ranking_global;
-
+   
+    function trajectories_analysis() {
+      return $this->hasOne(TrayectoriaAnalisis::class, 'trajectory_id', 'id');
     }
 
-    
-
-    function ranking_lipids() {
-      //DB::enableQueryLog();
-      $ranking_lipid = $this->hasMany(RankingLipids::class);
-      //dd(DB::getQueryLog());
-      return $ranking_lipid;
-
+    function trajectories_analysis_lipids() {
+      return $this->hasMany(TrayectoriaAnalisisLipidos::class, 'trajectory_id', 'id');
     }
 
-
-    
-
-    function TrayectoriaAnalisisLipidosfunc() {
-      return $this->hasMany(TrayectoriaAnalisisLipidos::class);
+    function getTrayectoriaAnalisisLipidos() {
+      return $this->hasMany(TrayectoriaAnalisisLipidos::class, 'trajectory_id', 'id')->where('lipid_id', '!=', null);
     }
 
-  
+    function get_trajectory_analysis_lipids_by_lipid($lipid_id) {
+      return $this->hasOne(TrayectoriaAnalisisLipidos::class, 'trajectory_id', 'id')->where('lipid_id', $lipid_id)->first();
+    }
 
+    function trajectoriesLipids() {
+      return $this->hasMany(TrayectoriasLipidos::class, 'trajectory_id', 'id');
+    }
 
     function lipidos() {
       //  DB::enableQueryLog();
@@ -98,10 +88,7 @@ class Trayectoria extends AppModel
     }
 
 
-    /*function peptidos() {
-        //return $this->belongsToMany(Peptido::class, TrayectoriasPeptidos::getTableName())->withPivot('bulk');
-        return $this->belongsToMany(Peptido::class, TrayectoriasPeptidos::getTableName())->withPivot('peptide_id');
-    }*/
+    
 
     function iones() {
         return $this->belongsToMany(Ion::class, TrayectoriasIones::getTableName());//->withPivot('bulk');
@@ -111,11 +98,8 @@ class Trayectoria extends AppModel
     }
     
     function membranas() {
-      //dd(TrayectoriasMembranas::getTableName());
-        //$res = $this->belongsToMany(Membrana::class, TrayectoriasMembranas::getTableName());
-
+      
         $res = $this->belongsToMany(Membrana::class, Trayectoria::getTableName(),'id');
-        //dd($res);
         return $res;
     }
 

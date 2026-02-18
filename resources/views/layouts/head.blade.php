@@ -1,14 +1,15 @@
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no,maximum-scale=1.0, user-scalable=no" />
-    <meta name="description" content="Nmrlipids" />
-    <meta name="author" content="NMRlipids Databank" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <meta name="description" content="FAIRMD Lipids Databank" />
+    <meta name="author" content="NMRLipids Consortium" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
 
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="NMRlipids Databank">
-    <meta property="og:title" content="NMRlipids Databank">
-    <meta property="og:description" content="NMRlipids Databank">
+    <meta property="og:site_name" content="FAIRMD Lipids Databank">
+    <meta property="og:title" content="FAIRMD Lipids Databank">
+    <meta property="og:description" content="FAIRMD Lipids Databank">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:locale" content="en_US">
     <meta property="og:image" content="{{ url('storage/images/nmr_w_letras.png') }}">
@@ -32,6 +33,7 @@
     <!-- Jquery UI plugin CSS-->
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
+    <link rel="stylesheet" href="{{ asset('css/welcome-mobile.css') }}">
     <!-- Core theme CSS (includes Bootstrap)-->
     <link href="{{ asset('css/styles.css') }}" rel="stylesheet" />
     <!--  SLIDER -->
@@ -40,8 +42,8 @@
     @yield('meta-tags')
     
      <!-- Styles -->
-     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
-     <link href="{{ asset('css/custom.css') }}" rel="stylesheet">
+     <link href="{{ asset('css/app.css') }}" rel="stylesheet" />
+     <link href="{{ asset('css/custom.css') }}" rel="stylesheet"/>
 
 <!-- End Add template -->
 
@@ -77,8 +79,7 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"   crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
    
-     <!-- Chart.js -->
-     <script type="text/javascript"  src="https://unpkg.com/chart.js@4.0"></script>
+     
 
 <style>
     /* Dark pill tabs */

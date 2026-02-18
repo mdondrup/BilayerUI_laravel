@@ -60,63 +60,6 @@ class ExperimentController extends Controller
         return 0;
     }
 
-/**
- * Transform the plot data keys and split by G1, G2, G3 components
- * 
- * For each key:
- * 1. Split on space and use the second part
- * 2. Remove leading "M_" and trailing "_M"
- * 3. Categorize into G1, G2, or G3 arrays based on the key prefix
- * 4. Sort keys within each category by their numerical components
- * 
- * @param array $data The plot data array
- * @return array An associative array with 'G1', 'G2', 'G3' keys, each containing sorted filtered data
- */
-function formatOPData($data) {
-    $result = [
-        'G1' => [],
-        'G2' => [],
-        'G3' => []
-    ];
-    
-    foreach ($data as $key => $value) {
-        // Split the key on space and get the second part
-        $parts = explode(' ', $key);
-        
-        if (count($parts) < 2) {
-            // If there's no space, use the original key
-            $newKey = $key;
-        } else {
-            $newKey = $parts[1];
-        }
-        
-        // Remove leading "M_"
-        if (strpos($newKey, 'M_') === 0) {
-            $newKey = substr($newKey, 2);
-        }
-        
-        // Remove trailing "_M"
-        if (substr($newKey, -2) === '_M') {
-            $newKey = substr($newKey, 0, -2);
-        }
-        
-        // Categorize by G1, G2, or G3
-        if (strpos($newKey, 'G1') === 0) {
-            $result['G1'][$newKey] = $value[0][0];
-        } elseif (strpos($newKey, 'G2') === 0) {
-            $result['G2'][$newKey] = $value[0][0];
-        } elseif (strpos($newKey, 'G3') === 0) {
-            $result['G3'][$newKey] = $value[0][0];
-        }
-    }
-    
-    // Sort each category by numeric components
-    foreach ($result as $category => &$array) {
-        uksort($array, [self::class, 'compareNumericComponents']);
-    }
-    
-    return $result;
-}
 
 
 
@@ -187,6 +130,9 @@ function formatOPData($data) {
 
     public function show($type, $doi, $section): \Illuminate\View\View
     {
+
+        $OPData = null;
+
         // Fetch experiment by DOI, section, and type
         $experiment = DB::table('experiments')
             ->where('article_doi', $doi)
@@ -227,11 +173,18 @@ function formatOPData($data) {
             $membraneComposition = null;
         } else {
             foreach ($membraneComposition as $index => $memComp) {
-                if (!empty($memComp->data)) {
-                    $formattedData = $this->formatOPData(json_decode($memComp->data, true) ?? []);
-                    $membraneComposition[$index]->data = $formattedData;
-                } else {
-                    $membraneComposition[$index]->data = null;
+                if (empty($memComp->data)) {
+                    continue;
+                }
+
+                $tmp = json_decode($memComp->data, true);
+                if (json_last_error() !== JSON_ERROR_NONE || !is_array($tmp)) {
+                    continue;
+                }
+
+                foreach ($tmp as $group => $data) {
+                    $OPData[$memComp->molecule][$group] = [$data];
+                }
             }
         }
         
@@ -252,23 +205,20 @@ function formatOPData($data) {
             }
         }            
 
-        
-        $datFF =  ($experiment->type === 'FF' && !empty($experiment->data)) ? $this->formatFFData($experiment->data) : null;
+        $dataFF[] =  ($experiment->type === 'FF' && !empty($experiment->data)) ? json_decode($experiment->data, true) : null;
 
         return View::make('experiment', [
                 'entity' => ['doi' => $experiment->article_doi,
-                             'data_doi' => $experiment->data_doi,
+                            'data_doi' => $experiment->data_doi,
                             'section' => $experiment->section, 
                             'path' => $experiment->path,
                             'type' => ($experiment->type),
-                            'data' => $datFF['data'] ?? null,
-                            'data_min' => $datFF['min'] ?? null,
-                            'data_max' => $datFF['max'] ?? null,
                             'membrane_composition' => $membraneComposition,
                             'solution_composition' => $solutionComposition,
                             ],
                 'properties' => $assocProps,
-        ]);
+                'OPData' => $OPData,
+                'FFData' => $dataFF,
+            ]);
     }
-}
 }

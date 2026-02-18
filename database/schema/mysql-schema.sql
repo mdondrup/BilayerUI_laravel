@@ -49,7 +49,7 @@ CREATE TABLE `experiments` (
   `section` bigint DEFAULT 1 NOT NULL,
   `path` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
   `type` enum('FF','OP') CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT 'FF',
-  `data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL, 
+  `data` JSON DEFAULT NULL, 
   -- JSON data with experiment details, e.g. FF parameters or OP details
   PRIMARY KEY (`id`),
   UNIQUE KEY `experiments_path_unique` (`path`, `type`),
@@ -322,7 +322,8 @@ CREATE TABLE `cross_references` (
 
 --
 -- Table structure for table `membranes`
---
+-- This table is mainly used to count the number of unique membranes in the database
+-- 
 
 DROP TABLE IF EXISTS `membranes`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -335,12 +336,11 @@ CREATE TABLE `membranes` (
   `lipid_number_l1` varchar(255) DEFAULT NULL,
   `lipid_number_l2` varchar(255) DEFAULT NULL,
   `geometry` varchar(255) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `membranes_unique` (`forcefield_id`,`lipid_names_l1`, `lipid_number_l1`,`lipid_names_l2`,`lipid_number_l2`,`geometry`), 
   KEY `forcefield_id` (`forcefield_id`),
   CONSTRAINT `membranes_ibfk_1` FOREIGN KEY (`forcefield_id`) REFERENCES `forcefields` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -362,48 +362,14 @@ CREATE TABLE `migrations` (
 -- Table structure for table `ranking_global`
 --
 
-DROP TABLE IF EXISTS `ranking_global`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ranking_global` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `trajectory_id` bigint NOT NULL,
-  `ranking_total` bigint NOT NULL,
-  `ranking_hg` float NOT NULL,
-  `ranking_tails` float NOT NULL,
-  `quality_total` float NOT NULL,
-  `quality_hg` float NOT NULL,
-  `quality_tails` float NOT NULL,
-  PRIMARY KEY (`id`) USING BTREE,
-  KEY `trajectory_id` (`trajectory_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
-/*!40101 SET character_set_client = @saved_cs_client */;
+-- Ranking of trajectories based on global properties has been removed.
 
 
 --
 -- Table structure for table `ranking_lipids`
 --
 
-DROP TABLE IF EXISTS `ranking_lipids`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ranking_lipids` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
-  `trajectory_id` bigint NOT NULL,
-  `lipid_id` int NOT NULL,
-  `ranking_total` int NOT NULL,
-  `ranking_hg` int NOT NULL,
-  `ranking_sn-1` int NOT NULL,
-  `ranking_sn-2` int NOT NULL,
-  `quality_total` float NOT NULL,
-  `quality_hg` float NOT NULL,
-  `quality_sn-1` float NOT NULL,
-  `quality_sn-2` float NOT NULL,
-  PRIMARY KEY (`id`) USING BTREE,
-  KEY `trajectory_id` (`trajectory_id`),
-  KEY `lipid_id` (`lipid_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
-/*!40101 SET character_set_client = @saved_cs_client */;
+-- Ranking of trajectories based on lipid-specific properties has been removed.
 
 --
 -- Table structure for table `trajectories`
@@ -434,7 +400,7 @@ CREATE TABLE `trajectories` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `water_resname` varchar(8) NOT NULL DEFAULT 'IMPLICIT',
   PRIMARY KEY (`id`),
-  -- UNIQUE KEY `trajectories_unique` (`forcefield_id`,`membrane_id`,`system`, `doi`),
+  UNIQUE KEY `trajectories_unique` (`forcefield_id`,`membrane_id`,`system`, `git_path`),
   KEY `forcefield_id` (`forcefield_id`),
   KEY `membrane_id` (`membrane_id`),
   CONSTRAINT `trajectories_ibfk_1` FOREIGN KEY (`forcefield_id`) REFERENCES `forcefields` (`id`),
@@ -452,17 +418,20 @@ DROP TABLE IF EXISTS `trajectories_analysis`;
 CREATE TABLE `trajectories_analysis` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `trajectory_id` bigint unsigned NOT NULL,
-  `bilayer_thickness` float DEFAULT NULL,
-  `area_per_lipid` float DEFAULT NULL,
+  `bilayer_thickness` double DEFAULT NULL,
+  `area_per_lipid` double DEFAULT NULL,
   `area_per_lipid_file` varchar(255) NOT NULL,
+  `area_per_lipid_data` JSON DEFAULT NULL,
   `form_factor_file` varchar(255) NOT NULL,
-  `quality_total` double NOT NULL,
-  `quality_headgroups` double NOT NULL,
-  `quality_tails` double NOT NULL,
-  `form_factor_quality` double NOT NULL,
-  `form_factor_scaling` double NOT NULL,
-  `form_factor_experiment` varchar(255) NOT NULL,
+  `form_factor_data` JSON DEFAULT NULL,
+  `op_quality_total` double DEFAULT NULL,
+  `op_quality_headgroups` double DEFAULT NULL,
+  `op_quality_tails` double DEFAULT NULL,
+  `ff_quality` double DEFAULT NULL,
+  `ff_scaling` double DEFAULT NULL,
+   -- REMOVE `form_factor_experiment` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
+  
   KEY `trajectory_id` (`trajectory_id`),
   CONSTRAINT `trajectories_analysis_ibfk_1` FOREIGN KEY (`trajectory_id`) REFERENCES `trajectories` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3;
@@ -497,14 +466,15 @@ CREATE TABLE `trajectories_analysis_lipids` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `trajectory_id` bigint unsigned NOT NULL,
   `lipid_id` bigint unsigned NOT NULL,
-  `quality_total` varchar(255) NOT NULL,
-  `quality_hg` varchar(255) NOT NULL,
-  `quality_sn-1` varchar(255) NOT NULL,
-  `quality_sn-2` varchar(255) NOT NULL,
-  `order_parameters_file` varchar(255) NOT NULL,
-  `order_parameters_quality` varchar(255) NOT NULL,
-  `order_parameters_experiment` varchar(255) NOT NULL,
+  `op_quality_total` double DEFAULT NULL,
+  `op_quality_headgroups` double DEFAULT NULL,
+  `op_quality_tails` double DEFAULT NULL,
+  `order_parameters_file` varchar(255) DEFAULT NULL,
+  `order_parameters_quality` varchar(255) DEFAULT NULL,
+  `order_parameters_experiment` varchar(255) DEFAULT NULL,
+  `op_plot_data` JSON DEFAULT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `trajectory_lipid_unique` (`trajectory_id`,`lipid_id`),
   KEY `trajectory_id` (`trajectory_id`),
   KEY `lipid_id` (`lipid_id`),
   CONSTRAINT `trajectories_analysis_lipids_ibfk_1` FOREIGN KEY (`trajectory_id`) REFERENCES `trajectories` (`id`),
@@ -591,11 +561,8 @@ CREATE TABLE `trajectories_lipids` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `trajectory_id` bigint unsigned NOT NULL,
   `lipid_id` bigint unsigned NOT NULL,
-  `lipid_name` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
   `leaflet_1` int NOT NULL,
   `leaflet_2` int NOT NULL,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `analysis_trajectory_id_foreign` (`trajectory_id`),
   KEY `Lipid_ID` (`lipid_id`),
@@ -667,7 +634,7 @@ CREATE VIEW `experiments_FF` AS
     `experiments`.`data_doi` AS `data_doi`,
     `experiments`.`path` AS `path`,
     `experiments`.`section` AS `section`,
-    `experiments`.`data` AS `FF_data`
+    `experiments`.`data` AS `data`
    FROM `experiments`
   WHERE (`experiments`.`type` = 'FF');
 

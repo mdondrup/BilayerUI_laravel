@@ -4,7 +4,7 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ExperimentsOP extends Model
+class ExperimentsOP extends Experiments
 {
     protected $table = 'experiments_OP';
 
@@ -22,4 +22,12 @@ class ExperimentsOP extends Model
                 'trajectory_id'
             );
         }
+
+    public function membraneComposition()
+    {
+        return $this->hasMany(MembraneComposition::class, 'experiment_id', 'id');
+    }    
+
+    
+    
 }

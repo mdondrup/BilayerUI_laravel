@@ -299,10 +299,10 @@ use App\Trayectoria;
 
                                             <td>
                                                 <?php
-                                                if (implode(', ', $tempData['quality_total']) == 0 || implode(', ', $tempData['quality_total']) == '4242') {
+                                                if (empty(implode(', ', $tempData['op_quality_total'])) || implode(', ', $tempData['op_quality_total']) == '4242') {
                                                     echo 'N/A';
                                                 } else {
-                                                    echo round(implode(', ', $tempData['quality_total']), 2);
+                                                    echo (implode(', ', $tempData['op_quality_total']));
                                                 }
 
                                                 ?>
