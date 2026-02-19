@@ -15,7 +15,7 @@
     <meta property="og:image" content="{{ url('storage/images/nmr_w_letras.png') }}">
 
         <!-- Include bioschemas for the data catalog only in production-->
-     <!-- {{ config('app.env') }} is set in config/app.php and can be overridden in .env -->
+     {{-- app.env is set in config/app.php and can be overridden in .env --}}
     @if(config('app.env') === 'production')
         @include('bioschemas.dataCatalog')
     @endif
