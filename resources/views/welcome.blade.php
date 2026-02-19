@@ -1,6 +1,7 @@
 <!doctype html>
 <html class="welcome" lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 @include('layouts.head')
+
 @php
 use App\Http\Controllers\StatisticsController;
 @endphp
@@ -34,7 +35,7 @@ use App\Http\Controllers\StatisticsController;
                     <h2 class="text-white font-weight-bold">
                         <img class="img-fluid" alt="FAIRMD Lipids Databank Logo"
                             src="{{ asset('storage/images/nmr_w_letras.png') }}" alt="">
-                          (version <?php echo config('app.version'); ?>)
+                          (version {{ config('app.version') }})
                     </h2>
                 </div>
                 @if(config('app.debug'))

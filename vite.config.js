@@ -8,7 +8,8 @@ export default defineConfig({
                     'resources/js/plotopcharts.js', 
                     'resources/js/plotApLchart.js',
                     'resources/js/plotFFcharts.js',
-                    'resources/js/plotMembrane.js'
+                    'resources/js/plotMembrane.js',
+                    'resources/site-metadata/dataCatalogProfile.json'
                 ],
             refresh: true,
         }),
