@@ -9,9 +9,10 @@ export default defineConfig({
                     'resources/js/plotApLchart.js',
                     'resources/js/plotFFcharts.js',
                     'resources/js/plotMembrane.js',
-                    'resources/site-metadata/dataCatalogProfile.json'
                 ],
-            refresh: true,
+            refresh: [
+                'resources/site-metadata/dataCatalogProfile.json',
+            ],
         }),
     ],
 });
