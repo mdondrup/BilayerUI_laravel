@@ -1,0 +1,366 @@
+{
+    "@context": "https://schema.org/",
+    "@type": "DataCatalog",
+    "@id": "",
+    "http://purl.org/dc/terms/conformsTo": {
+        "@type": "CreativeWork",
+        "@id": "https://bioschemas.org/profiles/DataCatalog/0.3-RELEASE-2019_07_01"
+    },
+    "url": "https://www.databank.nmrlipids.fi",
+    "identifier": "https://doi.org/10.25504/FAIRsharing.d32bc8",
+    "name": "FAIRMD Lipids Databank",
+    "description": "FAIRMD Lipids Databank is a community-driven catalogue containing atomistic MD simulations of biologically relevant lipid membranes emerging from the FAIRMD Lipids open collaboration. It has been designed to improve the Findability, Accessibility, Interoperability, and Reuse (FAIR) of MD simulation data.",
+    "datePublished": "2021-12-21",
+    "dateModified": "2026-02",
+    "citation": {
+        "@type": "ScholarlyArticle",
+        "@id": "https://doi.org/10.1038/s41467-024-45189-z",
+        "name": "Overlay databank unlocks data-driven analyses of biomolecules for all",
+        "url": "https://doi.org/10.1038/s41467-024-45189-z",
+        "sameAs": [
+            "https://www.nature.com/articles/s41467-024-45189-z",
+            "https://europepmc.org/article/MED/38326316",
+            "https://pubmed.ncbi.nlm.nih.gov/38326316/"
+        ]
+    },
+    "keywords": [
+        "Membrane",
+        "Biophysics",
+        "Molecular dynamics simulation",
+        "intrinsic disorder",
+        "Lipid"
+    ],
+    "sourceOrganization": [
+        {
+            "@type": "Organization",
+            "@id": "https://ror.org/040af2s02",
+            "dct:conformsTo": {
+                "@id": "https://bioschemas.org/profiles/Organization/0.2-DRAFT-2019_07_19",
+                "@type": "CreativeWork"
+            },
+            "description": "Institute of Biotechnology, University of Helsinki",
+            "name": "Institute of Biotechnology, University of Helsinki",
+            "legalName": "University of Helsinki",
+            "sameAs": "https://www.helsinki.fi/en"
+        },
+        {
+            "@type": "Organization",
+            "@id": "https://ror.org/00pwgnh47",
+            "dct:conformsTo": {
+                "@id": "https://bioschemas.org/profiles/Organization/0.2-DRAFT-2019_07_19",
+                "@type": "CreativeWork"
+            },
+            "description": "Department of Theory and Bio-Systems, Max Planck Institute of Colloids and Interfaces, Potsdam",
+            "name": "Department of Theory and Bio-Systems, Max Planck Institute of Colloids and Interfaces",
+            "legalName": "Max Planck Institute of Colloids and Interfaces",
+            "sameAs": "https://www.mpikg.mpg.de/en"
+        },
+        {
+            "@type": "Organization",
+            "@id": "https://ror.org/05n3dz165",
+            "dct:conformsTo": {
+                "@id": "https://bioschemas.org/profiles/Organization/0.2-DRAFT-2019_07_19",
+                "@type": "CreativeWork"
+            },
+            "description": "Nanoscience Center and Department of Chemistry, University of Jyväskylä",
+            "name": "Nanoscience Center and Department of Chemistry, University of Jyväskylä",
+            "legalName": "University of Jyväskylä",
+            "sameAs": "https://www.jyu.fi/en"
+        },
+        {
+            "@type": "Organization",
+            "@id": "https://ror.org/00davry38",
+            "dct:conformsTo": {
+                "@id": "https://bioschemas.org/profiles/Organization/0.2-DRAFT-2019_07_19",
+                "@type": "CreativeWork"
+            },
+            "description": "Departamento de Ciencias Básicas, Tecnológico Nacional de México - ITS Zacatecas Occidente, Sombrerete",
+            "name": "Departamento de Ciencias Básicas, ITS Zacatecas Occidente",
+            "legalName": "Tecnológico Nacional de México",
+            "sameAs": "https://www.tecnm.mx/"
+        },
+        {
+            "@type": "Organization",
+            "@id": "https://ror.org/05gqaka33",
+            "dct:conformsTo": {
+                "@id": "https://bioschemas.org/profiles/Organization/0.2-DRAFT-2019_07_19",
+                "@type": "CreativeWork"
+            },
+            "description": "NMR group - Institute for Physics, Martin Luther University Halle-Wittenberg",
+            "name": "Institute for Physics, Martin Luther University Halle-Wittenberg (NMR group)",
+            "legalName": "Martin Luther University Halle-Wittenberg",
+            "sameAs": "https://www.uni-halle.de/"
+        },
+        {
+            "@type": "Organization",
+            "@id": "https://ror.org/05a0dhs15",
+            "dct:conformsTo": {
+                "@id": "https://bioschemas.org/profiles/Organization/0.2-DRAFT-2019_07_19",
+                "@type": "CreativeWork"
+            },
+            "description": "Laboratoire des Biomolécules (LBM), Sorbonne Université / École Normale Supérieure / PSL / CNRS, Paris",
+            "name": "Laboratoire des Biomolécules (LBM)",
+            "legalName": "Sorbonne Université; École Normale Supérieure; PSL University; CNRS",
+            "sameAs": "https://www.sorbonne-universite.fr/"
+        },
+        {
+            "@type": "Organization",
+            "@id": "https://ror.org/030eybx10",
+            "dct:conformsTo": {
+                "@id": "https://bioschemas.org/profiles/Organization/0.2-DRAFT-2019_07_19",
+                "@type": "CreativeWork"
+            },
+            "description": "Center for Research in Biological Chemistry and Molecular Materials (CiQUS), Universidade de Santiago de Compostela",
+            "name": "CiQUS, Universidade de Santiago de Compostela",
+            "legalName": "Universidade de Santiago de Compostela",
+            "sameAs": "https://www.usc.gal/"
+        },
+        {
+            "@type": "Organization",
+            "@id": "https://ror.org/02nv7yv05",
+            "dct:conformsTo": {
+                "@id": "https://bioschemas.org/profiles/Organization/0.2-DRAFT-2019_07_19",
+                "@type": "CreativeWork"
+            },
+            "description": "Institute of Biological Information Processing: Structural Biochemistry (IBI-7), Forschungszentrum Jülich",
+            "name": "IBI-7, Forschungszentrum Jülich",
+            "legalName": "Forschungszentrum Jülich",
+            "sameAs": "https://www.fz-juelich.de/"
+        },
+        {
+            "@type": "Organization",
+            "@id": "https://ror.org/0587ef340",
+            "dct:conformsTo": {
+                "@id": "https://bioschemas.org/profiles/Organization/0.2-DRAFT-2019_07_19",
+                "@type": "CreativeWork"
+            },
+            "description": "Department of Physical Chemistry of Drugs, Faculty of Pharmacy, Comenius University Bratislava",
+            "name": "Department of Physical Chemistry of Drugs, Comenius University Bratislava",
+            "legalName": "Comenius University Bratislava",
+            "sameAs": "https://uniba.sk/en/"
+        },
+        {
+            "@type": "Organization",
+            "@id": "https://ror.org/04nfjn472",
+            "dct:conformsTo": {
+                "@id": "https://bioschemas.org/profiles/Organization/0.2-DRAFT-2019_07_19",
+                "@type": "CreativeWork"
+            },
+            "description": "Institute of Organic Chemistry and Biochemistry of the Czech Academy of Sciences, Prague",
+            "name": "Institute of Organic Chemistry and Biochemistry, Czech Academy of Sciences",
+            "legalName": "Institute of Organic Chemistry and Biochemistry of the Czech Academy of Sciences",
+            "sameAs": "https://www.uochb.cz/en"
+        },
+        {
+            "@type": "Organization",
+            "@id": "https://ror.org/00cyydd11",
+            "dct:conformsTo": {
+                "@id": "https://bioschemas.org/profiles/Organization/0.2-DRAFT-2019_07_19",
+                "@type": "CreativeWork"
+            },
+            "description": "School of Pharmacy, University of Eastern Finland, Kuopio",
+            "name": "School of Pharmacy, University of Eastern Finland",
+            "legalName": "University of Eastern Finland",
+            "sameAs": "https://www.uef.fi/"
+        },
+        {
+            "@type": "Organization",
+            "@id": "https://ror.org/051escj72",
+            "dct:conformsTo": {
+                "@id": "https://bioschemas.org/profiles/Organization/0.2-DRAFT-2019_07_19",
+                "@type": "CreativeWork"
+            },
+            "description": "Institut Charles Gerhardt Montpellier (UMR CNRS 5253), Université Montpellier",
+            "name": "Institut Charles Gerhardt Montpellier (UMR CNRS 5253)",
+            "legalName": "Université Montpellier",
+            "sameAs": "https://www.umontpellier.fr/"
+        },
+        {
+            "@type": "Organization",
+            "@id": "https://ror.org/038t36y30",
+            "dct:conformsTo": {
+                "@id": "https://bioschemas.org/profiles/Organization/0.2-DRAFT-2019_07_19",
+                "@type": "CreativeWork"
+            },
+            "description": "Heidelberg University Biochemistry Center",
+            "name": "Heidelberg University Biochemistry Center",
+            "legalName": "Heidelberg University",
+            "sameAs": "https://www.uni-heidelberg.de/"
+        },
+        {
+            "@type": "Organization",
+            "@id": "https://ror.org/032db5x82",
+            "dct:conformsTo": {
+                "@id": "https://bioschemas.org/profiles/Organization/0.2-DRAFT-2019_07_19",
+                "@type": "CreativeWork"
+            },
+            "description": "Department of Molecular Medicine, Morsani College of Medicine, University of South Florida, Tampa, FL, USA",
+            "name": "Department of Molecular Medicine, Morsani College of Medicine, University of South Florida",
+            "legalName": "University of South Florida",
+            "sameAs": "https://www.usf.edu/"
+        },
+        {
+            "@type": "Organization",
+            "@id": "https://ror.org/04p61dj41",
+            "dct:conformsTo": {
+                "@id": "https://bioschemas.org/profiles/Organization/0.2-DRAFT-2019_07_19",
+                "@type": "CreativeWork"
+            },
+            "description": "Hochschule Mannheim, University of Applied Sciences",
+            "name": "Hochschule Mannheim, University of Applied Sciences",
+            "legalName": "Technische Hochschule Mannheim",
+            "sameAs": "https://www.hs-mannheim.de/"
+        },
+        {
+            "@type": "Organization",
+            "@id": "https://ror.org/01rk35k63",
+            "dct:conformsTo": {
+                "@id": "https://bioschemas.org/profiles/Organization/0.2-DRAFT-2019_07_19",
+                "@type": "CreativeWork"
+            },
+            "description": "Molecular Microbiology and Structural Biochemistry (MMSB, UMR 5086), University of Lyon / CNRS",
+            "name": "MMSB, University of Lyon / CNRS",
+            "legalName": "University of Lyon; CNRS",
+            "sameAs": "https://www.universite-lyon.fr/"
+        },
+        {
+            "@type": "Organization",
+            "@id": "https://ror.org/03zga2b32",
+            "dct:conformsTo": {
+                "@id": "https://bioschemas.org/profiles/Organization/0.2-DRAFT-2019_07_19",
+                "@type": "CreativeWork"
+            },
+            "description": "Department of Chemistry, University of Bergen",
+            "name": "Department of Chemistry, University of Bergen",
+            "legalName": "University of Bergen",
+            "sameAs": "https://www.uib.no/en"
+        },
+        {
+            "@type": "Organization",
+            "@id": "https://ror.org/01ryk1543",
+            "dct:conformsTo": {
+                "@id": "https://bioschemas.org/profiles/Organization/0.2-DRAFT-2019_07_19",
+                "@type": "CreativeWork"
+            },
+            "description": "Chemistry, University of Southampton, Highfield, Southampton, UK",
+            "name": "Chemistry, University of Southampton",
+            "legalName": "University of Southampton",
+            "sameAs": "https://www.southampton.ac.uk/"
+        }
+    ],
+    "provider": [
+        [
+            {
+                "@type": "Person",
+                "givenName": "Alexey",
+                "familyName": "Nesterenko",
+                "identifier": "https://github.com/comcon1",
+                "name": "Alexey Nesterenko",
+                "url": "https://scholar.google.com/citations?user=SS2cOxUAAAAJ&hl=r"
+            },
+            {
+                "@type": "Person",
+                "identifier": "https://github.com/ohsOllila",
+                "name": "ohsOllila",
+                "url": "https://github.com/ohsOllila"
+            },
+            {
+                "@type": "Person",
+                "givenName": "Batuhan",
+                "familyName": "Kav",
+                "identifier": "https://github.com/batukav",
+                "name": "Batuhan Kav",
+                "url": "https://github.com/batukav"
+            },
+            {
+                "@type": "Person",
+                "identifier": "https://github.com/MagnusSletten",
+                "name": "MagnusSletten",
+                "url": "https://github.com/MagnusSletten"
+            },
+            {
+                "@type": "Person",
+                "identifier": "https://github.com/larabort",
+                "name": "larabort",
+                "url": "https://github.com/larabort"
+            },
+            {
+                "@type": "Person",
+                "givenName": "Philip",
+                "familyName": "Loche",
+                "identifier": "https://github.com/PicoCentauri",
+                "name": "Philip Loche",
+                "url": "https://github.com/PicoCentauri"
+            },
+            {
+                "@type": "Person",
+                "givenName": "Cedric",
+                "identifier": "https://github.com/thraindk",
+                "name": "Cedric",
+                "url": "https://github.com/thraindk"
+            },
+            {
+                "@type": "Person",
+                "givenName": "Markus",
+                "familyName": "Miettinen",
+                "identifier": "https://github.com/markussmiettinen",
+                "name": "Markus Miettinen",
+                "url": "https://github.com/markussmiettinen"
+            },
+            {
+                "@type": "Person",
+                "givenName": "Fabián",
+                "familyName": "Suárez-Lestón",
+                "identifier": "https://github.com/fsuarezleston",
+                "name": "Fabián Suárez-Lestón",
+                "url": "https://github.com/fsuarezleston"
+            },
+            {
+                "@type": "Person",
+                "identifier": "https://github.com/pbuslaev",
+                "name": "pbuslaev",
+                "url": "https://github.com/pbuslaev"
+            },
+            {
+                "@type": "Person",
+                "identifier": "https://github.com/hsantila",
+                "name": "hsantila",
+                "url": "https://github.com/hsantila"
+            },
+            {
+                "@type": "Person",
+                "givenName": "Michael",
+                "familyName": "Dondrup",
+                "identifier": "https://github.com/mdondrup",
+                "name": "Michael Dondrup",
+                "url": "https://github.com/mdondrup"
+            },
+            {
+                "@type": "Person",
+                "identifier": "https://github.com/akiirik",
+                "name": "akiirik",
+                "url": "https://github.com/akiirik"
+            },
+            {
+                "@type": "Person",
+                "givenName": "Korbinian",
+                "familyName": "Bösl",
+                "identifier": "https://orcid.org/0000-0003-0498-4273",
+                "name": "Korbinian Bösl",
+                "url": "https://orcid.org/0000-0003-0498-4273"
+            },
+            {
+                "@type": "Person",
+                "identifier": "https://github.com/JHoeflich1",
+                "name": "JHoeflich1",
+                "url": "https://github.com/JHoeflich1"
+            }
+        ]
+    ],
+    "license": {
+        "@type": "CreativeWork",
+        "@id": "https://creativecommons.org/licenses/by/4.0/",
+        "name": "Creative Commons Attribution 4.0 International",
+        "url": "https://creativecommons.org/licenses/by/4.0/"
+    }
+}
