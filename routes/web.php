@@ -92,6 +92,8 @@ Route::get('lipids', function (Illuminate\Http\Request  $request) {
     return $valid_tags;
 });
 
+// ICICIC: This route is for showing the details of a single Peptido entity, but it is not needed. 
+// 
 // Route::get('/peptido/{peptido_id}', 'PeptidosController@show')->name('peptidos.show');
 
 /* Implementing a route for lipids
@@ -102,10 +104,13 @@ Route::get('lipids', function (Illuminate\Http\Request  $request) {
 // In a real application, this should be replaced with a proper controller method
 // that fetches lipid details from the database.
 // Lipid_id can be either the numeric ID or the short_name
-// Example: Route::get('/lipid/{lipid_id}', 'LipidosController@show')->name('lipid.show');
 
 Route::get('/lipid/{lipid_id}', [LipidController::class, 'show']
 )->name('lipid.show');
+
+
+Route::get('/lipids', [LipidController::class, 'list'])
+    ->name('lipids.list');
 
 Route::get('/experiment/{type}/{doi}/{section}', [ExperimentController::class, 'show'])
     ->where(['doi' => '.+', 'section' => '[0-9]+', 'type' => 'FF|OP'])
