@@ -38,4 +38,20 @@ class Lipido extends AppModel
         // Return the mapping from the pivot table
         return $pivot?->pivot?->mapping;
     }
+
+    public function properties()
+    {
+        return $this->belongsToMany(
+            Property::class,
+            'lipid_properties',
+            'lipid_id',
+            'property_id'
+        );
+    }
+
+    public function getInchiKeyAttribute()
+    {
+        $inchiKeyProperty = $this->properties()->where('properties.name', 'InChIKey')->first();
+        return $inchiKeyProperty?->value;
+    }
 }

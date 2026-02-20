@@ -12,6 +12,7 @@
                                 <tr>
                                     <th>Accession</th>
                                     <th>Chemical name</th>
+                                    <th>InChIKey</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -20,6 +21,7 @@
                                     <tr>
                                         <td>{{ $lipid->molecule }}</td>
                                         <td>{{ $lipid->name }}</td>
+                                        <td>{{ $lipid->getInchiKeyAttribute() }}</td>
                                         
                                         <td>
                                             <a href="{{ route('lipid.show', $lipid->id) }}" 
