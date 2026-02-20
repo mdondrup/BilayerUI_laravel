@@ -20,6 +20,7 @@
         @include('bioschemas.dataCatalog')
     @endif
     <!-- Include bioschemas only if entity is provided -->
+    @endif
     @if(isset($entity) && !empty($entity))
      @include('bioschemas.molecular_entity', ['entity' => $entity])
      <meta property="og:title" content="{{ $entity['name'] ?? 'Molecular Entity' }}">
