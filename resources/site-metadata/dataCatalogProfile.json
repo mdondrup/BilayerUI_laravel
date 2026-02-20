@@ -6,8 +6,8 @@
         "@type": "CreativeWork",
         "@id": "https://bioschemas.org/profiles/DataCatalog/0.3-RELEASE-2019_07_01"
     },
-    "url": "",
-    "identifier": "",
+    "url": "https://www.databank.nmrlipids.fi",
+    "identifier": "https://doi.org/10.25504/FAIRsharing.d32bc8",
     "name": "FAIRMD Lipids Databank",
     "description": "FAIRMD Lipids Databank is a community-driven catalogue containing atomistic MD simulations of biologically relevant lipid membranes emerging from the FAIRMD Lipids open collaboration. It has been designed to improve the Findability, Accessibility, Interoperability, and Reuse (FAIR) of MD simulation data.",
     "datePublished": "2021-12-21",
@@ -355,9 +355,7 @@
                 "name": "JHoeflich1",
                 "url": "https://github.com/JHoeflich1"
             }
-        ],
-        "encodingFormat",
-        "application/json"
+        ]
     ],
     "license": {
         "@type": "CreativeWork",

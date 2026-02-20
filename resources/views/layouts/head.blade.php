@@ -14,10 +14,11 @@
     <meta property="og:locale" content="en_US">
     <meta property="og:image" content="{{ url('storage/images/nmr_w_letras.png') }}">
 
-        <!-- Include boschemas for the data catalog only in production-->
-     <!-- {{ config('app.env') }} is set in config/app.php and can be overridden in .env -->
+        <!-- Include bioschemas for the data catalog only in production-->
+     {{-- app.env is set in config/app.php and can be overridden in .env --}}
     @if(config('app.env') === 'production')
         @include('bioschemas.dataCatalog')
+    @endif
     <!-- Include bioschemas only if entity is provided -->
     @endif
     @if(isset($entity) && !empty($entity))

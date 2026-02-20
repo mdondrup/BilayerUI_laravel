@@ -23,7 +23,7 @@ DROP TABLE IF EXISTS `sessions`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `sessions` (
-  `id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `id` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
   `user_id` bigint unsigned DEFAULT NULL,
   `ip_address` varchar(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `user_agent` text COLLATE utf8mb4_unicode_ci,
@@ -337,7 +337,7 @@ CREATE TABLE `membranes` (
   `lipid_number_l2` varchar(255) DEFAULT NULL,
   `geometry` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `membranes_unique` (`forcefield_id`,`lipid_names_l1`, `lipid_number_l1`,`lipid_names_l2`,`lipid_number_l2`,`geometry`), 
+  UNIQUE KEY `membranes_unique` (`forcefield_id`,`lipid_names_l1`,`lipid_names_l2`), 
   KEY `forcefield_id` (`forcefield_id`),
   CONSTRAINT `membranes_ibfk_1` FOREIGN KEY (`forcefield_id`) REFERENCES `forcefields` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
