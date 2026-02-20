@@ -65,7 +65,7 @@ class LipidController extends Controller
     {
         $itemsPerPage = $request->query('items_per_page', 10);
         $embed = $request->query('embed', false);
-        $embed= filter_var($embed, FILTER_VALIDATE_BOOLEAN);
+        $embed = filter_var($embed, FILTER_VALIDATE_BOOLEAN);
         // Special value to show all
         if ($itemsPerPage === 'all' || $itemsPerPage == -1) {
             $lipids = Lipido::all() //sorted by molecule name
